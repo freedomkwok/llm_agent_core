@@ -1,0 +1,52 @@
+skills:
+  - id: break_ice_early_chat
+    title: 刚认识阶段对话分析与破冰
+    summary: 分析刚认识时的聊天节奏，识别推进是否过快，并给出自然的下一句回复
+    triggers:
+      - 这样回可以吗
+      - 怎么破冰
+      - 对方什么意思
+      - 怎么接话
+      - 刚认识怎么聊
+    input_types:
+      - screenshot
+      - chat_text
+      - draft_reply
+    stage:
+      - early_chat
+    tools: []
+    load_path: skills/break_ice_early_chat.md
+
+  - id: ask_for_wechat
+    title: 要微信时机判断
+    summary: 判断当前是否适合推进到微信，并给出低压力、不任务化的表达方式
+    triggers:
+      - 要不要加微信
+      - 什么时候要微信
+      - 怎么要微信自然
+      - 推进微信
+    input_types:
+      - screenshot
+      - chat_text
+      - draft_reply
+    stage:
+      - early_chat
+      - mid_chat
+    tools: []
+    load_path: skills/ask_for_wechat.md
+
+  - id: slow_reply_analysis
+    title: 回复变慢分析
+    summary: 分析对方回复变慢是否代表兴趣下降，并给出稳妥的下一步
+    triggers:
+      - 回复慢
+      - 已读不回
+      - 对方冷淡
+      - 还要不要继续
+    input_types:
+      - screenshot
+      - chat_text
+    stage:
+      - mid_chat
+    tools: []
+    load_path: skills/slow_reply_analysis.md

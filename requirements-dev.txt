@@ -1,0 +1,8 @@
+-r requirements.txt
+# Local package (editable). Same path as pyproject.toml llm-inference-core dependency.
+-e /Users/freedomkwokmacbookpro/Github/imp/llm_inference_core
+pytest>=8.2.0
+pytest-cov>=5.0.0
+ruff>=0.6.0
+mypy>=1.10.0
+types-PyYAML>=6.0.12.20250516
