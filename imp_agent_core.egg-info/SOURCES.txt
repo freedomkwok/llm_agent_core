@@ -11,11 +11,10 @@ agents/planning_agent/schemas/__init__.py
 agents/planning_agent/schemas/planning_schema.py
 agents/utils/langfuse.py
 agents/utils/zep_helper.py
-imp_chat_agent.egg-info/PKG-INFO
-imp_chat_agent.egg-info/SOURCES.txt
-imp_chat_agent.egg-info/dependency_links.txt
-imp_chat_agent.egg-info/requires.txt
-imp_chat_agent.egg-info/top_level.txt
-imp_chat_agent.egg-info/.adk/session.db
+imp_agent_core.egg-info/PKG-INFO
+imp_agent_core.egg-info/SOURCES.txt
+imp_agent_core.egg-info/dependency_links.txt
+imp_agent_core.egg-info/requires.txt
+imp_agent_core.egg-info/top_level.txt
 tests/test_agent_loads.py
 tests/test_registry_exists.py
