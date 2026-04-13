@@ -2,7 +2,8 @@ import asyncio
 
 from agents.agent_core import DynamicAgentRegistry
 from agents.skill_route_agent.registry import register_local_skill_route_agent
-from agents.skill_route_agent.skill_route_agent import SkillRouteInferenceEngine
+from agents.skill_route_agent.skill_route_adk_agent import SkillRouteAdkAgent
+from agents.skill_route_agent.utils.zep_helper import ZepQueryRequest
 
 
 class FakeLocalSkillRouteA2AAgent:
@@ -18,8 +19,8 @@ def _build_fake_local_skill_route_agent() -> FakeLocalSkillRouteA2AAgent:
 class DisabledZepComponent:
     is_configured = False
 
-    def search_skills(self, *, query: str, user_id: str | None = None, limit: int = 5):
-        del query, user_id, limit
+    def execute_query(self, request: ZepQueryRequest):
+        del request
         return []
 
 
@@ -35,10 +36,10 @@ def test_register_local_skill_route_agent() -> None:
 
 
 def test_skill_route_engine_returns_empty_route_when_zep_unavailable() -> None:
-    engine = SkillRouteInferenceEngine(zep_component=DisabledZepComponent())
+    agent = SkillRouteAdkAgent(zep_component=DisabledZepComponent())
 
     async def run():
-        return await engine.route_request(
+        return await agent.route_request(
             request_text="Choose the best skill for building Redis sessions."
         )
 

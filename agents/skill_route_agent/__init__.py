@@ -8,7 +8,6 @@ from agents.skill_route_agent.registry import (
 )
 from agents.skill_route_agent.schemas import RoutedSkillCandidate, SkillRouteSchema
 from agents.skill_route_agent.skill_route_adk_agent import SkillRouteAdkAgent
-from agents.skill_route_agent.skill_route_agent import SkillRouteInferenceEngine
 from agents.skill_route_agent.start_agent import (
     build_local_a2a_skill_route_agent,
     run_local_skill_route_flow,
@@ -19,7 +18,6 @@ __all__ = [
     "RoutedSkillCandidate",
     "SkillRouteAdkAgent",
     "SkillRouteAgentExecutor",
-    "SkillRouteInferenceEngine",
     "SkillRouteSchema",
     "build_local_a2a_skill_route_agent",
     "build_skill_route_agent_descriptor",

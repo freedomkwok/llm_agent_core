@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from enum import Enum
+
 from pydantic import BaseModel, Field
 
 
@@ -13,6 +15,37 @@ class RoutedSkillCandidate(BaseModel):
     description: str = Field(
         default="",
         description="Short description or summary from Zep for this skill.",
+    )
+
+
+class ZepSearchScope(str, Enum):
+    """Supported Zep graph search scopes."""
+
+    NODES = "nodes"
+    EDGES = "edges"
+
+
+class ZepQueryParams(BaseModel):
+    """Structured parameters for a single Zep query execution."""
+
+    query: str = Field(..., description="Search text sent to Zep graph search.")
+    scope: ZepSearchScope = Field(
+        default=ZepSearchScope.NODES,
+        description="Graph scope to query first (nodes or edges).",
+    )
+    limit: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Maximum number of graph results to fetch.",
+    )
+    user_id: str = Field(
+        default="",
+        description="Optional override user id for Zep retrieval.",
+    )
+    rationale: str = Field(
+        default="",
+        description="Why these query parameters are suitable for the request.",
     )
 
 

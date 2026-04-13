@@ -1,0 +1,35 @@
+
+flowchart TD
+  subgraph build["1) Construction only — no LLM / Zep yet"]
+    B0["build_local_a2a_skill_route_agent()"] --> B1["A2aAgent(agent_card, agent_executor_builder=SkillRouteAgentExecutor)"]
+    B1 --> B2["agent.set_up()"]
+  end
+
+  subgraph run["2) Execution — work starts here"]
+    R0["run_local_skill_route_flow(message, mode, metadata)"] --> R1["run_local_a2a_orchestration(...)"]
+    R1 --> M{"OrchestrationMode"}
+
+    M -->|"HOST_DRIVEN"| C["handle_authenticated_agent_card"]
+    M -->|"AGENT_INTERNAL"| S0["skip card (default)"]
+
+    C --> S["on_message_send(in-memory Starlette Request + JSON body)"]
+    S0 --> S
+
+    S --> E["SkillRouteAgentExecutor.execute"]
+    E --> L["run_with_langfuse_chain_trace"]
+    L --> N["ADK Runner.run_async"]
+    N --> A["SkillRouteAdkAgent._run_async_impl"]
+    A --> Z["ZepSkillSearchComponent + llm_inference_core"]
+    A --> Y["yield Event (final text)"]
+
+    S --> T["task id from send_response"]
+    T --> P{"fetch_task_response? (default: HOST_DRIVEN=yes, AGENT_INTERNAL=no)"}
+    P -->|"yes"| G["on_get_task(task_id)"]
+    P -->|"no"| X["stop at send_response only"]
+    G --> F["artifacts -> final_text, task_status"]
+    Y --> F
+    X --> OUT["A2AFlowResult"]
+    F --> OUT
+  end
+
+  build -.->|"after build, caller invokes"| run

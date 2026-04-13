@@ -19,6 +19,16 @@ class ZepSkillCandidate:
     raw: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class ZepQueryRequest:
+    """Typed request payload used for executing Zep graph searches."""
+
+    query: str
+    scope: str = "nodes"
+    limit: int = 5
+    user_id: str | None = None
+
+
 def _to_plain_dict(value: Any) -> dict[str, Any]:
     if hasattr(value, "model_dump"):
         dumped = value.model_dump(mode="json")
@@ -77,8 +87,9 @@ class ZepSkillSearchComponent:
         query: str,
         user_id: str | None = None,
         limit: int = 5,
+        scope: str = "nodes",
     ) -> list[ZepSkillCandidate]:
-        """Search Zep graph nodes and normalize them into skill candidates."""
+        """Search Zep graph scope and normalize results into skill candidates."""
         if not self.client:
             return []
 
@@ -86,17 +97,35 @@ class ZepSkillSearchComponent:
         if not resolved_user_id or not query.strip():
             return []
 
+        normalized_scope = "edges" if str(scope).strip().lower() == "edges" else "nodes"
         response = self.client.graph.search(
             query=query,
             user_id=resolved_user_id,
-            scope="nodes",
+            scope=normalized_scope,
             limit=limit,
         )
-        nodes = getattr(response, "nodes", None) or []
-        return [candidate for candidate in (self._normalize_node(node) for node in nodes) if candidate]
+        raw_records = (
+            getattr(response, "edges", None)
+            if normalized_scope == "edges"
+            else getattr(response, "nodes", None)
+        ) or []
+        return [
+            candidate
+            for candidate in (self._normalize_record(record) for record in raw_records)
+            if candidate
+        ]
 
-    def _normalize_node(self, node: Any) -> ZepSkillCandidate | None:
-        raw = _to_plain_dict(node)
+    def execute_query(self, request: ZepQueryRequest) -> list[ZepSkillCandidate]:
+        """Execute a typed Zep query request and return normalized candidates."""
+        return self.search_skills(
+            query=request.query,
+            user_id=request.user_id,
+            limit=request.limit,
+            scope=request.scope,
+        )
+
+    def _normalize_record(self, record: Any) -> ZepSkillCandidate | None:
+        raw = _to_plain_dict(record)
         if not raw:
             return None
 
@@ -140,3 +169,4 @@ class ZepSkillSearchComponent:
             description=description,
             raw=raw,
         )
+        

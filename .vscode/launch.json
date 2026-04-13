@@ -1,0 +1,40 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Skill Router: Local Flow Debug",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/examples/skill_route_debug_run.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/agents/skill_route_agent",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "envFile": "${workspaceFolder}/agents/skill_route_agent/.env",
+      "justMyCode": false,
+      "args": [
+        "--mode",
+        "host_driven",
+        "--debug"
+      ]
+    },
+    {
+      "name": "Skill Router: Pytest File Debug",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "envFile": "${workspaceFolder}/.env",
+      "justMyCode": false,
+      "args": [
+        "-s",
+        "tests/test_skill_route_agent.py"
+      ]
+    }
+  ]
+}

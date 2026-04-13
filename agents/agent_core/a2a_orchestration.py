@@ -5,10 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import json
+import logging
+import time
 from typing import Any, Mapping
 from uuid import uuid4
 
 from starlette.requests import Request
+
+logger = logging.getLogger(__name__)
 
 
 class OrchestrationMode(str, Enum):
@@ -201,7 +205,26 @@ async def run_local_a2a_orchestration(
 
     payload = _build_message_payload(message_text=message_text, metadata=metadata)
     post_request = _build_post_request(payload)
-    send_response = await a2a_agent.on_message_send(request=post_request, context=context)
+    send_started = time.perf_counter()
+    try:
+        send_response = await a2a_agent.on_message_send(request=post_request, context=context)
+    except Exception:  # noqa: BLE001
+        logger.exception(
+            "on_message_send failed mode=%s include_card=%s fetch_task=%s message_id=%s",
+            mode.value,
+            include_card,
+            fetch_task,
+            payload["message"].get("messageId"),
+        )
+        raise
+    logger.debug(
+        "on_message_send completed mode=%s include_card=%s fetch_task=%s elapsed_ms=%d has_task_id=%s",
+        mode.value,
+        include_card,
+        fetch_task,
+        int((time.perf_counter() - send_started) * 1000),
+        bool(_extract_task_id(send_response)),
+    )
 
     task_response = None
     task_id = _extract_task_id(send_response)
@@ -209,7 +232,19 @@ async def run_local_a2a_orchestration(
         if not task_id:
             raise ValueError("A2A send response does not include task.id")
         get_request = _build_get_task_request(task_id)
-        task_response = await a2a_agent.on_get_task(request=get_request, context=context)
+        get_started = time.perf_counter()
+        try:
+            task_response = await a2a_agent.on_get_task(request=get_request, context=context)
+        except Exception:  # noqa: BLE001
+            logger.exception("on_get_task failed task_id=%s mode=%s", task_id, mode.value)
+            raise
+        logger.debug(
+            "on_get_task completed task_id=%s mode=%s elapsed_ms=%d task_status=%s",
+            task_id,
+            mode.value,
+            int((time.perf_counter() - get_started) * 1000),
+            _extract_task_status(task_response),
+        )
 
     return A2AFlowResult(
         mode=mode,

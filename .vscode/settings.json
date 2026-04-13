@@ -3,10 +3,12 @@
   "python.terminal.activateEnvironment": true,
   "python.envFile": "${workspaceFolder}/.env",
   "python.analysis.extraPaths": [
-    "${workspaceFolder}"
+    "${workspaceFolder}",
+    "${workspaceFolder}/../llm_inference_core"
   ],
   "cursorpyright.analysis.extraPaths": [
-    "${workspaceFolder}"
+    "${workspaceFolder}",
+    "${workspaceFolder}/../llm_inference_core"
   ],
   "python-envs.pythonProjects": [
     {
