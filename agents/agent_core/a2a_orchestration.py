@@ -26,6 +26,54 @@ class A2AFlowResult:
     send_response: Any
     card_response: Any | None = None
     task_response: Any | None = None
+    task_id: str | None = None
+    task_status: str | None = None
+    final_text: str | None = None
+
+
+def _extract_task_status(task_response: Any) -> str | None:
+    if not isinstance(task_response, Mapping):
+        return None
+    task = task_response.get("task")
+    if not isinstance(task, Mapping):
+        return None
+    raw_status = task.get("status")
+    if isinstance(raw_status, Mapping):
+        raw_status = raw_status.get("state")
+    if isinstance(raw_status, str) and raw_status:
+        return raw_status
+    return None
+
+
+def _extract_text_from_content_items(content: Any) -> list[str]:
+    texts: list[str] = []
+    if not isinstance(content, list):
+        return texts
+    for item in content:
+        if isinstance(item, Mapping):
+            text = item.get("text")
+            if isinstance(text, str) and text:
+                texts.append(text)
+    return texts
+
+
+def _extract_final_text(task_response: Any) -> str | None:
+    if not isinstance(task_response, Mapping):
+        return None
+    task = task_response.get("task")
+    if not isinstance(task, Mapping):
+        return None
+    artifacts = task.get("artifacts")
+    if not isinstance(artifacts, list):
+        return None
+    parts: list[str] = []
+    for artifact in artifacts:
+        if not isinstance(artifact, Mapping):
+            continue
+        parts.extend(_extract_text_from_content_items(artifact.get("parts")))
+    if not parts:
+        return None
+    return "\n".join(parts)
 
 
 def _build_message_payload(
@@ -44,6 +92,20 @@ def _build_message_payload(
     if metadata:
         payload["message"]["metadata"] = dict(metadata)
     return payload
+
+
+def build_local_a2a_message_payload(
+    *,
+    message_text: str,
+    metadata: Mapping[str, Any] | None = None,
+    message_id: str | None = None,
+) -> dict[str, Any]:
+    """Build local JSON payload for an A2A message send call."""
+    return _build_message_payload(
+        message_text=message_text,
+        metadata=metadata,
+        message_id=message_id,
+    )
 
 
 def _build_post_request(payload: Mapping[str, Any]) -> Request:
@@ -65,6 +127,11 @@ def _build_post_request(payload: Mapping[str, Any]) -> Request:
     return Request(scope, receive=receive)
 
 
+def build_local_a2a_post_request(payload: Mapping[str, Any]) -> Request:
+    """Build a Starlette POST request for local in-process A2A calls."""
+    return _build_post_request(payload)
+
+
 def _build_get_task_request(task_id: str) -> Request:
     scope = {
         "type": "http",
@@ -81,6 +148,11 @@ def _build_get_task_request(task_id: str) -> Request:
     return Request(scope, receive=receive)
 
 
+def build_local_a2a_get_task_request(task_id: str) -> Request:
+    """Build a Starlette GET request for local task retrieval."""
+    return _build_get_task_request(task_id)
+
+
 def _extract_task_id(send_response: Any) -> str | None:
     if not isinstance(send_response, Mapping):
         return None
@@ -91,6 +163,11 @@ def _extract_task_id(send_response: Any) -> str | None:
     if isinstance(raw_id, str) and raw_id:
         return raw_id
     return None
+
+
+def extract_local_a2a_task_id(send_response: Any) -> str | None:
+    """Extract task id from local A2A send response."""
+    return _extract_task_id(send_response)
 
 
 async def run_local_a2a_orchestration(
@@ -127,8 +204,8 @@ async def run_local_a2a_orchestration(
     send_response = await a2a_agent.on_message_send(request=post_request, context=context)
 
     task_response = None
+    task_id = _extract_task_id(send_response)
     if fetch_task:
-        task_id = _extract_task_id(send_response)
         if not task_id:
             raise ValueError("A2A send response does not include task.id")
         get_request = _build_get_task_request(task_id)
@@ -139,4 +216,7 @@ async def run_local_a2a_orchestration(
         card_response=card_response,
         send_response=send_response,
         task_response=task_response,
+        task_id=task_id,
+        task_status=_extract_task_status(task_response),
+        final_text=_extract_final_text(task_response),
     )

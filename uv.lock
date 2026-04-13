@@ -1729,7 +1729,7 @@ wheels = [
 ]
 
 [[package]]
-name = "imp-chat-agent"
+name = "imp-agent-core"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
