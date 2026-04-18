@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 
 class RoutedSkillCandidate(BaseModel):
@@ -39,9 +39,10 @@ class ZepQueryParams(BaseModel):
         le=20,
         description="Maximum number of graph results to fetch.",
     )
-    user_id: str = Field(
+    graph_id: str = Field(
         default="",
-        description="Optional override user id for Zep retrieval.",
+        description="Optional Zep graph id override for graph.search (defaults to GRAPH_ID env).",
+        validation_alias=AliasChoices("graph_id", "user_id"),
     )
     rationale: str = Field(
         default="",

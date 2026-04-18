@@ -9,7 +9,7 @@ from vertexai.preview.reasoning_engines import A2aAgent
 from agents.agent_core import A2AFlowResult, OrchestrationMode, run_local_a2a_orchestration
 from agents.skill_route_agent._env import bootstrap_env
 from agents.skill_route_agent.agent_card import agent_card
-from agents.skill_route_agent.agent_executor import SkillRouteAgentExecutor
+from agents.skill_route_agent.a2a_executor import SkillRouteA2aExecutor
 
 bootstrap_env()
 
@@ -26,30 +26,8 @@ def build_local_a2a_skill_route_agent(
     del mode
     agent = A2aAgent(
         agent_card=agent_card,
-        agent_executor_builder=lambda: SkillRouteAgentExecutor(),
+        agent_executor_builder=lambda: SkillRouteA2aExecutor(),
     )
     agent.set_up()
     return agent
 
-
-async def run_local_skill_route_flow(
-    *,
-    message_text: str,
-    mode: OrchestrationMode = OrchestrationMode.HOST_DRIVEN,
-    metadata: Mapping[str, Any] | None = None,
-    context: Any = None,
-) -> A2AFlowResult:
-    """Run skill route agent locally via host-driven or agent-internal orchestration."""
-    a2a_agent = build_local_a2a_skill_route_agent(mode=mode)
-    return await run_local_a2a_orchestration(
-        a2a_agent=a2a_agent,
-        message_text=message_text,
-        mode=mode,
-        metadata=metadata,
-        context=context,
-    )
-
-
-if __name__ == "__main__":
-    local_agent = build_local_a2a_skill_route_agent()
-    print(local_agent)

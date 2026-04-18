@@ -1,28 +1,28 @@
-"""AgentExecutor for planning agent."""
+"""A2A execution wrapper for the skill route ADK agent."""
 
 from typing import Any
 
 from google.adk.agents.base_agent import BaseAgent
 from langfuse import get_client
 
-from agents.agent_core import AdkRunnerChainExecutor
-from agents.planning_agent._env import bootstrap_env
-from agents.planning_agent.planning_adk_agent import PlanningInferenceAdkAgent
+from agents.agent_core import AdkA2aExecutionWrapper
+from agents.skill_route_agent._env import bootstrap_env
+from agents.skill_route_agent.a2a_agent_core import SkillRouteAdkAgent
 
 bootstrap_env()
 
 
-class PlanningAgentExecutor(AdkRunnerChainExecutor):
-    """Planning executor with shared runner/session/trace orchestration."""
+class SkillRouteA2aExecutor(AdkA2aExecutionWrapper):
+    """Skill-routing A2A wrapper with shared runner/session/trace orchestration."""
 
     def __init__(
         self,
-        adk_agent: PlanningInferenceAdkAgent | None = None,
+        adk_agent: SkillRouteAdkAgent | None = None,
         *,
         langfuse_client: Any | None = None,
     ):
         self.langfuse_client = langfuse_client or get_client()
-        self.adk_agent = adk_agent or PlanningInferenceAdkAgent(
+        self.adk_agent = adk_agent or SkillRouteAdkAgent(
             langfuse_client=self.langfuse_client
         )
         super().__init__(langfuse_client=self.langfuse_client)
@@ -32,17 +32,17 @@ class PlanningAgentExecutor(AdkRunnerChainExecutor):
 
     @property
     def trace_name(self) -> str:
-        return "planning_executor_execute"
+        return "skill_route_executor_execute"
 
     @property
     def artifact_name(self) -> str:
-        return "plan"
+        return "skill_route"
 
     @property
     def failed_text_message(self) -> str:
-        return "Failed to generate a planning response with text content."
+        return "Failed to generate a skill routing response with text content."
 
 
 if __name__ == "__main__":
-    executor = PlanningAgentExecutor()
+    executor = SkillRouteA2aExecutor()
     print(executor.__class__.__name__)

@@ -5,36 +5,29 @@
       "name": "Skill Router: Local Flow Debug",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/examples/skill_route_debug_run.py",
+      "program": "${workspaceFolder}/agents/skill_route_agent/run_local.py",
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/agents/skill_route_agent",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       },
       "envFile": "${workspaceFolder}/agents/skill_route_agent/.env",
-      "justMyCode": false,
-      "args": [
-        "--mode",
-        "host_driven",
-        "--debug"
-      ]
+      "justMyCode": false
     },
+
+
     {
-      "name": "Skill Router: Pytest File Debug",
+      "name": "A2A Example: 05 Test Local Calls",
       "type": "python",
       "request": "launch",
-      "module": "pytest",
+      "program": "${workspaceFolder}/examples/a2a/05_test_local_calls.py",
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       },
       "envFile": "${workspaceFolder}/.env",
-      "justMyCode": false,
-      "args": [
-        "-s",
-        "tests/test_skill_route_agent.py"
-      ]
+      "justMyCode": false
     }
   ]
 }

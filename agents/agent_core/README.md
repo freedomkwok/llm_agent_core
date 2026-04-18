@@ -196,9 +196,9 @@ This file is about **local transport flow**, not capability routing.
 
 ## ADK-backed execution support
 
-### `adk_runner_executor.py`
+### `adk_a2a_execution_wrapper.py`
 
-Defines `AdkRunnerChainExecutor`.
+Defines `AdkA2aExecutionWrapper`.
 
 This is a shared base class for agents that use:
 
@@ -253,7 +253,7 @@ Planning-side integration:
   - builds/registers planning descriptor
 - `planning_agent/start_agent.py`
   - builds local A2A planning agent
-- `planning_agent/agent_executor.py`
+- `planning_agent/a2a_executor.py`
   - thin execution wrapper
 - `planning_agent/planning_adk_agent.py`
   - actual custom ADK agent

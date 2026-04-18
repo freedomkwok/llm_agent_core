@@ -1,4 +1,4 @@
-"""Reusable A2A executor base backed by ADK Runner."""
+"""Reusable A2A execution wrapper backed by ADK Runner."""
 
 from __future__ import annotations
 
@@ -20,8 +20,8 @@ from google.genai import types
 from llm_inference_core import extract_langfuse_trace_context, run_with_langfuse_chain_trace
 
 
-class AdkRunnerChainExecutor(AgentExecutor, ABC):
-    """Base executor for agents that run through ADK Runner."""
+class AdkA2aExecutionWrapper(AgentExecutor, ABC):
+    """Base A2A wrapper for agents that run through ADK Runner."""
 
     def __init__(self, *, langfuse_client: Any):
         self.langfuse_client = langfuse_client
@@ -79,6 +79,7 @@ class AdkRunnerChainExecutor(AgentExecutor, ABC):
         user_id: str,
         context: RequestContext,
         request_text: str,
+        state_delta: dict[str, Any] | None = None,
     ) -> str:
         if self.runner is None:
             return ""
@@ -101,6 +102,7 @@ class AdkRunnerChainExecutor(AgentExecutor, ABC):
             session_id=session.id,
             user_id=user_id,
             new_message=content,
+            state_delta=state_delta,
         ):
             if event.is_final_response():
                 final_event = event
@@ -126,6 +128,12 @@ class AdkRunnerChainExecutor(AgentExecutor, ABC):
         )
         trace_context = extract_langfuse_trace_context(incoming_metadata)
         user_id = incoming_metadata.get("user_id") if incoming_metadata else "a2a_user"
+        graph_state_delta: dict[str, Any] | None = None
+        if "graph_id" in incoming_metadata:
+            raw_gid = incoming_metadata.get("graph_id")
+            graph_state_delta = {
+                "graph_id": (str(raw_gid).strip() if raw_gid is not None else "")
+            }
 
         updater = TaskUpdater(event_queue, context.task_id, context.context_id)
         if not context.current_task:
@@ -140,6 +148,7 @@ class AdkRunnerChainExecutor(AgentExecutor, ABC):
                     user_id=user_id,
                     context=context,
                     request_text=request_text,
+                    state_delta=graph_state_delta,
                 )
 
             def _on_chain_success(result: Any, observation: Any) -> None:

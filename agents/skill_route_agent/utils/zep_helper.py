@@ -26,7 +26,7 @@ class ZepQueryRequest:
     query: str
     scope: str = "nodes"
     limit: int = 5
-    user_id: str | None = None
+    graph_id: str | None = None
 
 
 def _to_plain_dict(value: Any) -> dict[str, Any]:
@@ -71,10 +71,10 @@ class ZepSkillSearchComponent:
         self,
         *,
         api_key: str | None = None,
-        default_user_id: str | None = None,
+        default_graph_id: str | None = None,
     ) -> None:
         resolved_api_key = (api_key or os.getenv("ZEP_API_KEY", "")).strip()
-        self.default_user_id = (default_user_id or os.getenv("ZEP_USER_ID", "")).strip()
+        self.default_graph_id = (default_graph_id or os.getenv("GRAPH_ID", "")).strip()
         self.client = Zep(api_key=resolved_api_key) if resolved_api_key else None
 
     @property
@@ -85,7 +85,7 @@ class ZepSkillSearchComponent:
         self,
         *,
         query: str,
-        user_id: str | None = None,
+        graph_id: str | None = None,
         limit: int = 5,
         scope: str = "nodes",
     ) -> list[ZepSkillCandidate]:
@@ -93,14 +93,14 @@ class ZepSkillSearchComponent:
         if not self.client:
             return []
 
-        resolved_user_id = (user_id or self.default_user_id).strip()
-        if not resolved_user_id or not query.strip():
+        resolved_graph_id = (graph_id or self.default_graph_id).strip()
+        if not resolved_graph_id or not query.strip():
             return []
 
         normalized_scope = "edges" if str(scope).strip().lower() == "edges" else "nodes"
         response = self.client.graph.search(
             query=query,
-            user_id=resolved_user_id,
+            graph_id=resolved_graph_id,
             scope=normalized_scope,
             limit=limit,
         )
@@ -119,7 +119,7 @@ class ZepSkillSearchComponent:
         """Execute a typed Zep query request and return normalized candidates."""
         return self.search_skills(
             query=request.query,
-            user_id=request.user_id,
+            graph_id=request.graph_id,
             limit=request.limit,
             scope=request.scope,
         )

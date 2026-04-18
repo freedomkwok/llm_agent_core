@@ -4,14 +4,10 @@ from __future__ import annotations
 
 from typing import Any, Callable, Mapping
 
-from agents.agent_core.agent_descriptor import (
-    AgentDescriptor,
-    aggregate_tags,
-    normalize_skill_descriptors,
-)
+from agents.agent_core.agent_descriptor import AgentDescriptor, build_local_descriptor_from_agent_card
 from agents.agent_core.agent_registry import DynamicAgentRegistry
 from agents.skill_route_agent.agent_card import agent_card
-from agents.skill_route_agent.start_agent import build_local_a2a_skill_route_agent
+from agents.skill_route_agent.a2a_agent import build_local_a2a_skill_route_agent
 
 
 def build_skill_route_agent_descriptor(
@@ -21,16 +17,10 @@ def build_skill_route_agent_descriptor(
     metadata: Mapping[str, Any] | None = None,
 ) -> AgentDescriptor:
     """Build the local skill route agent descriptor from the current AgentCard."""
-    card_data = agent_card.model_dump(mode="json")
-    skills = normalize_skill_descriptors(card_data.get("skills"))
-    descriptor = AgentDescriptor(
+    descriptor = build_local_descriptor_from_agent_card(
         agent_id=agent_id,
-        agent_name=str(card_data.get("name") or "Skill Route Agent"),
-        description=str(card_data.get("description") or ""),
-        skills=skills,
-        tags=aggregate_tags(skills),
+        agent_card=agent_card,
         local_builder=local_builder or build_local_a2a_skill_route_agent,
-        cached_agent_card=agent_card,
         metadata=dict(metadata or {}),
     )
     return descriptor

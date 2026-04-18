@@ -4,21 +4,17 @@ from __future__ import annotations
 
 import os
 import logging
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, Mapping
 
 from google.adk.agents.base_agent import BaseAgent
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events.event import Event
 from google.genai import types
-from llm_inference_core import (
-    InferenceCoreSettings,
-    InferenceProviderFactory,
-    ProjectContext,
-)
 from llm_inference_core.providers import InferenceProvider
 from pydantic import Field, SkipValidation
 from typing_extensions import override
 
+from agents.agent_core.inference_provider import create_inference_provider
 from agents.skill_route_agent._env import bootstrap_env
 from agents.skill_route_agent.schemas import (
     RoutedSkillCandidate,
@@ -55,13 +51,13 @@ QUERY_PARAMS_SYSTEM_PROMPT = (
     "- query: concise search text for Zep.\n"
     "- scope: one of nodes or edges.\n"
     "- limit: integer from 1 to 20.\n"
-    "- user_id: optional user id override, empty string if unknown.\n"
+    "- graph_id: optional Zep graph id override, empty string to use host GRAPH_ID.\n"
     "- rationale: short reason these parameters fit the request.\n"
     "Rules:\n"
     "- query should be compact and keyword-rich.\n"
     "- scope should be nodes unless edges are clearly better.\n"
     "- limit should be 3-10 for focused retrieval.\n"
-    "- user_id can be empty when unknown.\n"
+    "- graph_id can be empty to rely on the configured GRAPH_ID environment variable.\n"
 )
 
 
@@ -69,6 +65,26 @@ def _text_from_user_content(content: types.Content | None) -> str:
     if not content or not content.parts:
         return ""
     return "".join(part.text for part in content.parts if part.text)
+
+
+def _route_invocation_metadata(ctx: InvocationContext) -> dict[str, Any]:
+    """Metadata for routing/inference: session ids plus Zep graph_id.
+
+    ``graph_id`` comes from session state when the A2A client sent
+    ``message.metadata.graph_id`` (see ``AdkA2aExecutionWrapper``), else
+    ``GRAPH_ID`` env.
+    """
+    md: dict[str, Any] = {
+        "session_id": ctx.session.id,
+        "user_id": ctx.user_id,
+        "invocation_id": ctx.invocation_id,
+    }
+    graph_id = str(ctx.session.state.get("graph_id") or "").strip()
+    if not graph_id:
+        graph_id = os.getenv("GRAPH_ID", "").strip()
+    if graph_id:
+        md["graph_id"] = graph_id
+    return md
 
 
 class SkillRouteAdkAgent(BaseAgent):
@@ -88,37 +104,27 @@ class SkillRouteAdkAgent(BaseAgent):
     )
     max_loop_rounds: int = 2
 
+    def provider_settings_overrides(self) -> Mapping[str, Any]:
+        """Override default inference settings for this agent if needed."""
+        return {}
+
+    def provider_project_name(self) -> str:
+        """Override project name used by inference tracing/context."""
+        return "imp_agent_map.skill_route_agent"
+
+    def provider_project_metadata(self) -> Mapping[str, Any]:
+        """Override project metadata used by inference tracing/context."""
+        return {"component": "skill_route_agent"}
+
     def _ensure_provider(self) -> InferenceProvider:
         if self.provider is not None:
             return self.provider
 
-        settings = InferenceCoreSettings(
-            _env_file=None,
-            openai_api_key=os.getenv("OPENAI_API_KEY", ""),
-            openai_model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
-            openai_base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-            inference_provider=os.getenv("INFERENCE_PROVIDER", "openai"),
-            langfuse_public_key=os.getenv("LANGFUSE_PUBLIC_KEY", ""),
-            langfuse_secret_key=os.getenv("LANGFUSE_SECRET_KEY", ""),
-            langfuse_base_url=os.getenv("LANGFUSE_BASE_URL", "http://localhost:3000"),
-            prompt_base_dir=os.getenv("PROMPT_BASE_DIR", "app/prompts"),
-            prompt_label=os.getenv("PROMPT_LABEL", "production"),
-            prompt_cache_ttl_seconds=os.getenv("PROMPT_CACHE_TTL_SECONDS", 60),
-            prompt_project_miss_ttl_seconds=os.getenv("PROMPT_PROJECT_MISS_TTL_SECONDS", 1800),
-            prompt_tag_source=os.getenv("PROMPT_TAG_SOURCE", "local"),
-            prompt_tag_file=os.getenv("PROMPT_TAG_FILE", "local_prompt_tags.json"),
-            prompt_backend=os.getenv("PROMPT_BACKEND", "file"),
-            example_capture_inputs=os.getenv("EXAMPLE_CAPTURE_INPUTS", False),
-        )
-        project_context = ProjectContext(
-            project_name="imp_agent_map.skill_route_agent",
-            metadata={"component": "skill_route_agent"},
-        )
-        self.provider = InferenceProviderFactory.create(
-            settings.inference_provider,
-            settings=settings,
-            project_context=project_context,
-            langfuse=self.langfuse_client,
+        self.provider = create_inference_provider(
+            langfuse_client=self.langfuse_client,
+            project_name=self.provider_project_name(),
+            project_metadata=self.provider_project_metadata(),
+            settings_overrides=self.provider_settings_overrides(),
         )
         return self.provider
 
@@ -136,31 +142,28 @@ class SkillRouteAdkAgent(BaseAgent):
         if not self._ensure_zep_component().is_configured:
             return self._build_empty_route(request_text=request_text)
 
-        try:
-            provider = self._ensure_provider()
-            query_params = await self._infer_query_params(
-                provider=provider,
-                request_text=request_text,
-                metadata=metadata,
-            )
-            zep_candidates = self.lookup_candidates(query_params=query_params, metadata=metadata)
-        except Exception:  # noqa: BLE001
-            logger.exception(
-                "skill route pre-processing failed during query inference or Zep lookup",
-                extra={
-                    "request_preview": request_text[:120],
-                    "metadata_keys": sorted((metadata or {}).keys()),
-                },
-            )
-            raise
+ 
+        provider = self._ensure_provider()
+        (llm_generated_params, response_text) = await self._infer_query_params(
+            provider=provider,
+            request_text=request_text,
+            metadata=metadata,
+        )
+
+        zep_candidates = self.lookup_candidates(
+            llm_generated_params=llm_generated_params,
+            metadata=metadata,
+        )
+
         loop_notes = [
-            f"round=1 scope={query_params.scope.value} count={len(zep_candidates)} query={query_params.query}"
+            f"round=1 scope={llm_generated_params.scope.value} count={len(zep_candidates)} "
+            f"query={llm_generated_params.query}"
         ]
         if not zep_candidates and self.max_loop_rounds > 1:
-            fallback_params = self._build_fallback_query_params(query_params)
+            fallback_params = self._build_fallback_query_params(llm_generated_params)
             if fallback_params is not None:
                 fallback_candidates = self.lookup_candidates(
-                    query_params=fallback_params,
+                    llm_generated_params=fallback_params,
                     metadata=metadata,
                 )
                 zep_candidates.extend(fallback_candidates)
@@ -187,13 +190,15 @@ class SkillRouteAdkAgent(BaseAgent):
 
         try:
             result = await provider.infer(payload)
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
             logger.exception(
                 "skill route inference failed",
                 extra={
                     "trace_name": payload["trace_name"],
                     "request_preview": request_text[:120],
                     "candidate_count": len(zep_candidates),
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc),
                 },
             )
             raise
@@ -219,7 +224,7 @@ class SkillRouteAdkAgent(BaseAgent):
         provider: InferenceProvider,
         request_text: str,
         metadata: dict[str, Any] | None,
-    ) -> ZepQueryParams:
+    ) -> (ZepQueryParams, str):
         payload = {
             "trace_name": "skill_route_query_params_generation",
             "langfuse_type": "generation",
@@ -230,21 +235,12 @@ class SkillRouteAdkAgent(BaseAgent):
             "model_parameters": {"temperature": 0.0},
         }
 
-        try:
-            result = await provider.infer(payload)
-        except Exception:  # noqa: BLE001
-            logger.exception(
-                "skill route query-params inference failed",
-                extra={
-                    "trace_name": payload["trace_name"],
-                    "request_preview": request_text[:120],
-                },
-            )
-            raise
+        result = await provider.infer(payload)
+
         params = result if isinstance(result, ZepQueryParams) else ZepQueryParams.model_validate(result)
         if not params.query.strip():
             return params.model_copy(update={"query": request_text.strip()})
-        return params
+        return (params, result.text.strip())
 
     @staticmethod
     def _build_fallback_query_params(params: ZepQueryParams) -> ZepQueryParams | None:
@@ -257,17 +253,17 @@ class SkillRouteAdkAgent(BaseAgent):
     def lookup_candidates(
         self,
         *,
-        query_params: ZepQueryParams,
+        llm_generated_params: ZepQueryParams,
         metadata: dict[str, Any] | None = None,
     ) -> list[ZepSkillCandidate]:
         zep_component = self._ensure_zep_component()
-        metadata_user_id = str((metadata or {}).get("user_id") or "").strip()
-        explicit_user_id = query_params.user_id.strip()
+        metadata_graph_id = str((metadata or {}).get("graph_id") or "").strip()
+        explicit_graph_id = llm_generated_params.graph_id.strip()
         request = ZepQueryRequest(
-            query=query_params.query.strip(),
-            scope=query_params.scope.value,
-            limit=query_params.limit,
-            user_id=explicit_user_id or metadata_user_id or None,
+            query=llm_generated_params.query.strip(),
+            scope=llm_generated_params.scope.value,
+            limit=llm_generated_params.limit,
+            graph_id=explicit_graph_id or metadata_graph_id or None,
         )
         return zep_component.execute_query(request)
 
@@ -275,7 +271,7 @@ class SkillRouteAdkAgent(BaseAgent):
         zep_component = self._ensure_zep_component()
         if not zep_component.is_configured:
             rationale = "Zep is not configured, so no skill candidates could be retrieved."
-            next_action = "Configure ZEP_API_KEY and ZEP_USER_ID before routing again."
+            next_action = "Configure ZEP_API_KEY and GRAPH_ID before routing again."
         else:
             rationale = "No Zep skill candidates matched the request strongly enough."
             next_action = "Ask for more detail or add the missing skill description to Zep."
@@ -341,19 +337,17 @@ class SkillRouteAdkAgent(BaseAgent):
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         request_text = _text_from_user_content(ctx.user_content)
-        metadata = {
-            "session_id": ctx.session.id,
-            "user_id": ctx.user_id,
-            "invocation_id": ctx.invocation_id,
-        }
+        metadata = _route_invocation_metadata(ctx)
         try:
             route = await self.route_request(request_text=request_text, metadata=metadata)
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
             logger.exception(
                 "skill route request failed",
                 extra={
                     "request_preview": request_text[:120],
                     "metadata_keys": sorted((metadata or {}).keys()),
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc),
                 },
             )
             raise

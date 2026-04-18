@@ -2,7 +2,7 @@ import asyncio
 
 from agents.agent_core import DynamicAgentRegistry
 from agents.skill_route_agent.registry import register_local_skill_route_agent
-from agents.skill_route_agent.skill_route_adk_agent import SkillRouteAdkAgent
+from agents.skill_route_agent.a2a_agent_core import SkillRouteAdkAgent
 from agents.skill_route_agent.utils.zep_helper import ZepQueryRequest
 
 

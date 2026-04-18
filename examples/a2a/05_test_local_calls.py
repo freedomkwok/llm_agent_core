@@ -14,7 +14,7 @@ from langfuse import get_client
 from starlette.requests import Request
 
 from langfuse_map_env import bootstrap_langfuse_from_repo_env
-
+from vertexai.preview.reasoning_engines import A2aAgent
 # Project root: imp_agent_map/.env; MAP_LANGFUSE_* → LANGFUSE_* for Langfuse SDK
 bootstrap_langfuse_from_repo_env()
 
@@ -49,7 +49,7 @@ async def run_local_flow() -> None:
             print(f"Langfuse root_observation_id: {parent_observation_id}")
 
         build_local_a2a_agent = _load_local_agent_builder()
-        a2a_agent = build_local_a2a_agent()
+        a2a_agent : A2aAgent = build_local_a2a_agent()
 
         # 1) authenticated agent card
         card_resp = await a2a_agent.handle_authenticated_agent_card(request=None, context=None)

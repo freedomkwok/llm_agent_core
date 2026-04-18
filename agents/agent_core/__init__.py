@@ -1,13 +1,13 @@
 """Shared agent core abstractions."""
 
-from agents.agent_core.adk_runner_executor import AdkRunnerChainExecutor
+from agents.agent_core.adk_a2a_execution_wrapper import AdkA2aExecutionWrapper
 from agents.agent_core.a2a_orchestration import (
     A2AFlowResult,
     OrchestrationMode,
-    build_local_a2a_get_task_request,
-    build_local_a2a_message_payload,
-    build_local_a2a_post_request,
-    extract_local_a2a_task_id,
+    build_get_task_request,
+    build_message_payload,
+    build_post_request,
+    extract_task_id,
     run_local_a2a_orchestration,
 )
 from agents.agent_core.agent_descriptor import (
@@ -28,7 +28,7 @@ from agents.agent_core.host_orchestrator import HostOrchestrator
 
 __all__ = [
     "A2AFlowResult",
-    "AdkRunnerChainExecutor",
+    "AdkA2aExecutionWrapper",
     "AgentBackendType",
     "AgentDescriptor",
     "AgentHealthStatus",
@@ -41,9 +41,9 @@ __all__ = [
     "OrchestrationMode",
     "RemoteA2AHandle",
     "SkillDescriptor",
-    "build_local_a2a_get_task_request",
-    "build_local_a2a_message_payload",
-    "build_local_a2a_post_request",
-    "extract_local_a2a_task_id",
+    "build_get_task_request",
+    "build_message_payload",
+    "build_post_request",
+    "extract_task_id",
     "run_local_a2a_orchestration",
 ]

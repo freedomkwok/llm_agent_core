@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from enum import Enum
 import json
-import logging
 import time
 from typing import Any, Mapping
 from uuid import uuid4
 
 from starlette.requests import Request
-
-logger = logging.getLogger(__name__)
+from vertexai.preview.reasoning_engines import A2aAgent
 
 
 class OrchestrationMode(str, Enum):
@@ -33,6 +32,14 @@ class A2AFlowResult:
     task_id: str | None = None
     task_status: str | None = None
     final_text: str | None = None
+
+
+# Align with a2a TaskState terminal set used by DefaultRequestHandler.
+_TERMINAL_TASK_STATES = frozenset({"completed", "canceled", "failed", "rejected"})
+
+
+def _is_terminal_task_status(status: str | None) -> bool:
+    return status is not None and status in _TERMINAL_TASK_STATES
 
 
 def _extract_task_status(task_response: Any) -> str | None:
@@ -80,7 +87,7 @@ def _extract_final_text(task_response: Any) -> str | None:
     return "\n".join(parts)
 
 
-def _build_message_payload(
+def build_message_payload(
     *,
     message_text: str,
     metadata: Mapping[str, Any] | None = None,
@@ -98,21 +105,7 @@ def _build_message_payload(
     return payload
 
 
-def build_local_a2a_message_payload(
-    *,
-    message_text: str,
-    metadata: Mapping[str, Any] | None = None,
-    message_id: str | None = None,
-) -> dict[str, Any]:
-    """Build local JSON payload for an A2A message send call."""
-    return _build_message_payload(
-        message_text=message_text,
-        metadata=metadata,
-        message_id=message_id,
-    )
-
-
-def _build_post_request(payload: Mapping[str, Any]) -> Request:
+def build_post_request(payload: Mapping[str, Any]) -> Request:
     scope = {
         "type": "http",
         "http_version": "1.1",
@@ -120,23 +113,15 @@ def _build_post_request(payload: Mapping[str, Any]) -> Request:
         "headers": [(b"content-type", b"application/json")],
     }
     body = json.dumps(dict(payload)).encode("utf-8")
-    state = {"delivered": False}
 
     async def receive() -> dict[str, Any]:
-        if state["delivered"]:
-            return {"type": "http.disconnect"}
-        state["delivered"] = True
+        # Mirror examples/a2a/05_test_local_calls.py local receive behavior.
         return {"type": "http.request", "body": body, "more_body": False}
 
     return Request(scope, receive=receive)
 
 
-def build_local_a2a_post_request(payload: Mapping[str, Any]) -> Request:
-    """Build a Starlette POST request for local in-process A2A calls."""
-    return _build_post_request(payload)
-
-
-def _build_get_task_request(task_id: str) -> Request:
+def build_get_task_request(task_id: str) -> Request:
     scope = {
         "type": "http",
         "http_version": "1.1",
@@ -152,12 +137,7 @@ def _build_get_task_request(task_id: str) -> Request:
     return Request(scope, receive=receive)
 
 
-def build_local_a2a_get_task_request(task_id: str) -> Request:
-    """Build a Starlette GET request for local task retrieval."""
-    return _build_get_task_request(task_id)
-
-
-def _extract_task_id(send_response: Any) -> str | None:
+def extract_task_id(send_response: Any) -> str | None:
     if not isinstance(send_response, Mapping):
         return None
     task = send_response.get("task")
@@ -169,20 +149,17 @@ def _extract_task_id(send_response: Any) -> str | None:
     return None
 
 
-def extract_local_a2a_task_id(send_response: Any) -> str | None:
-    """Extract task id from local A2A send response."""
-    return _extract_task_id(send_response)
-
-
 async def run_local_a2a_orchestration(
     *,
-    a2a_agent: Any,
+    a2a_agent: A2aAgent,
     message_text: str,
     mode: OrchestrationMode,
     metadata: Mapping[str, Any] | None = None,
     context: Any = None,
     include_authenticated_card: bool | None = None,
     fetch_task_response: bool | None = None,
+    task_poll_timeout_sec: float = 300.0,
+    task_poll_interval_sec: float = 5.0,
 ) -> A2AFlowResult:
     """Run local A2A flow in host-driven or agent-internal mode."""
     include_card = (
@@ -203,48 +180,32 @@ async def run_local_a2a_orchestration(
             context=context,
         )
 
-    payload = _build_message_payload(message_text=message_text, metadata=metadata)
-    post_request = _build_post_request(payload)
-    send_started = time.perf_counter()
-    try:
-        send_response = await a2a_agent.on_message_send(request=post_request, context=context)
-    except Exception:  # noqa: BLE001
-        logger.exception(
-            "on_message_send failed mode=%s include_card=%s fetch_task=%s message_id=%s",
-            mode.value,
-            include_card,
-            fetch_task,
-            payload["message"].get("messageId"),
-        )
-        raise
-    logger.debug(
-        "on_message_send completed mode=%s include_card=%s fetch_task=%s elapsed_ms=%d has_task_id=%s",
-        mode.value,
-        include_card,
-        fetch_task,
-        int((time.perf_counter() - send_started) * 1000),
-        bool(_extract_task_id(send_response)),
-    )
+    payload = build_message_payload(message_text=message_text, metadata=metadata)
+    post_request = build_post_request(payload)
+    send_response = await a2a_agent.on_message_send(request=post_request, context=context)
 
     task_response = None
-    task_id = _extract_task_id(send_response)
+    task_id = extract_task_id(send_response)
     if fetch_task:
         if not task_id:
             raise ValueError("A2A send response does not include task.id")
-        get_request = _build_get_task_request(task_id)
-        get_started = time.perf_counter()
-        try:
-            task_response = await a2a_agent.on_get_task(request=get_request, context=context)
-        except Exception:  # noqa: BLE001
-            logger.exception("on_get_task failed task_id=%s mode=%s", task_id, mode.value)
-            raise
-        logger.debug(
-            "on_get_task completed task_id=%s mode=%s elapsed_ms=%d task_status=%s",
-            task_id,
-            mode.value,
-            int((time.perf_counter() - get_started) * 1000),
-            _extract_task_status(task_response),
-        )
+        deadline = time.monotonic() + task_poll_timeout_sec
+        task_response = None
+        while True:
+            get_request = build_get_task_request(task_id)
+            task_response = await a2a_agent.on_get_task(
+                request=get_request,
+                context=context,
+            )
+            status = _extract_task_status(task_response)
+            if _is_terminal_task_status(status):
+                break
+            if time.monotonic() >= deadline:
+                raise TimeoutError(
+                    f"A2A task {task_id!r} did not reach a terminal state within "
+                    f"{task_poll_timeout_sec}s (last status: {status!r})"
+                )
+            await asyncio.sleep(task_poll_interval_sec)
 
     return A2AFlowResult(
         mode=mode,

@@ -6,7 +6,7 @@ This folder contains agent building blocks and shared execution infrastructure.
 
 - `agent_core/`
   - Shared executor/orchestration code.
-  - `adk_runner_executor.py` holds the reusable A2A + ADK Runner flow:
+  - `adk_a2a_execution_wrapper.py` holds the reusable A2A + ADK Runner flow:
     - create/get ADK session
     - use in-memory session/memory/artifact services
     - run the ADK agent
@@ -17,14 +17,14 @@ This folder contains agent building blocks and shared execution infrastructure.
   - Current planner-style agent.
   - `planning_agent.py` contains the planning engine logic and schema-based planning generation.
   - `planning_adk_agent.py` is the custom ADK `BaseAgent` that calls the planning engine.
-  - `agent_executor.py` is now only a thin wrapper over `agent_core`.
+  - `a2a_executor.py` is now only a thin wrapper over `agent_core`.
   - `start_agent.py` builds the local A2A agent instance.
 
 ### Current planning flow
 
 1. Host sends a request to the A2A agent.
-2. `PlanningAgentExecutor` receives the request.
-3. Shared logic in `agent_core/adk_runner_executor.py`:
+2. `PlanningA2aExecutor` receives the request.
+3. Shared logic in `agent_core/adk_a2a_execution_wrapper.py`:
    - starts task updates
    - creates/loads the ADK session
    - runs the ADK custom agent through `Runner`

@@ -9,10 +9,10 @@ from typing import Any, Mapping
 from agents.agent_core.a2a_orchestration import (
     A2AFlowResult,
     OrchestrationMode,
-    build_local_a2a_get_task_request,
-    build_local_a2a_message_payload,
-    build_local_a2a_post_request,
-    extract_local_a2a_task_id,
+    build_get_task_request,
+    build_message_payload,
+    build_post_request,
+    extract_task_id,
     run_local_a2a_orchestration,
 )
 from agents.agent_core.agent_descriptor import AgentBackendType, AgentDescriptor
@@ -90,7 +90,7 @@ class BaseAgentHandle(ABC):
             metadata=metadata,
             context=context,
         )
-        task_id = extract_local_a2a_task_id(send_response)
+        task_id = extract_task_id(send_response)
         task_response = None
         if fetch_task:
             if not task_id:
@@ -139,17 +139,17 @@ class LocalA2AHandle(BaseAgentHandle):
         message_id: str | None = None,
     ) -> Any:
         a2a_agent = self._get_or_build_agent()
-        payload = build_local_a2a_message_payload(
+        payload = build_message_payload(
             message_text=message_text,
             metadata=metadata,
             message_id=message_id,
         )
-        request = build_local_a2a_post_request(payload)
+        request = build_post_request(payload)
         return await a2a_agent.on_message_send(request=request, context=context)
 
     async def get_task(self, *, task_id: str, context: Any = None) -> Any:
         a2a_agent = self._get_or_build_agent()
-        request = build_local_a2a_get_task_request(task_id)
+        request = build_get_task_request(task_id)
         return await a2a_agent.on_get_task(request=request, context=context)
 
     async def run(

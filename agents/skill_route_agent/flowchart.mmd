@@ -1,7 +1,7 @@
 
 flowchart TD
   subgraph build["1) Construction only — no LLM / Zep yet"]
-    B0["build_local_a2a_skill_route_agent()"] --> B1["A2aAgent(agent_card, agent_executor_builder=SkillRouteAgentExecutor)"]
+    B0["build_local_a2a_skill_route_agent()"] --> B1["A2aAgent(agent_card, agent_executor_builder=SkillRouteA2aExecutor)"]
     B1 --> B2["agent.set_up()"]
   end
 
@@ -15,7 +15,7 @@ flowchart TD
     C --> S["on_message_send(in-memory Starlette Request + JSON body)"]
     S0 --> S
 
-    S --> E["SkillRouteAgentExecutor.execute"]
+    S --> E["SkillRouteA2aExecutor.execute"]
     E --> L["run_with_langfuse_chain_trace"]
     L --> N["ADK Runner.run_async"]
     N --> A["SkillRouteAdkAgent._run_async_impl"]

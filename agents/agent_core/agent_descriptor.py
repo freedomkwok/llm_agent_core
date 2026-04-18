@@ -36,7 +36,8 @@ class SkillDescriptor:
 
 @dataclass(frozen=True)
 class AgentDescriptor:
-    """Normalized runtime description of one resolvable agent endpoint."""
+    """Normalized runtime description of one resolvable agent endpoint.
+       “one resolvable agent endpoint” and can carry a cached_agent_card for that same endpoint."""
 
     agent_id: str
     agent_name: str
@@ -118,3 +119,40 @@ def aggregate_tags(skills: Iterable[SkillDescriptor], tags: Iterable[str] | None
                 merged.append(tag)
                 seen.add(tag)
     return tuple(merged)
+
+
+def build_local_descriptor_from_agent_card(
+    *,
+    agent_id: str,
+    agent_card: Any,
+    local_builder: Callable[[], Any],
+    metadata: Mapping[str, Any] | None = None,
+    tags: Iterable[str] | None = None,
+    agent_name: str | None = None,
+    description: str | None = None,
+) -> AgentDescriptor:
+    """Build a local A2A descriptor from an AgentCard-like object."""
+    if hasattr(agent_card, "model_dump"):
+        card_data = agent_card.model_dump(mode="json")
+    elif isinstance(agent_card, Mapping):
+        card_data = dict(agent_card)
+    else:
+        card_data = {
+            "name": getattr(agent_card, "name", ""),
+            "description": getattr(agent_card, "description", ""),
+            "skills": getattr(agent_card, "skills", ()) or (),
+            "tags": getattr(agent_card, "tags", ()) or (),
+        }
+
+    skills = normalize_skill_descriptors(card_data.get("skills"))
+    return AgentDescriptor(
+        agent_id=agent_id,
+        agent_name=(agent_name or str(card_data.get("name") or agent_id)),
+        description=(description or str(card_data.get("description") or "")),
+        skills=skills,
+        tags=aggregate_tags(skills, tags if tags is not None else card_data.get("tags")),
+        backend_type=AgentBackendType.LOCAL_A2A,
+        local_builder=local_builder,
+        cached_agent_card=agent_card,
+        metadata=dict(metadata or {}),
+    )
