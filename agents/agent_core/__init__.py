@@ -1,6 +1,7 @@
 """Shared agent core abstractions."""
 
 from agents.agent_core.adk_a2a_execution_wrapper import AdkA2aExecutionWrapper
+from agents.agent_core.a2a_agent_builder import build_local_a2a_agent
 from agents.agent_core.a2a_orchestration import (
     A2AFlowResult,
     OrchestrationMode,
@@ -42,6 +43,7 @@ __all__ = [
     "RemoteA2AHandle",
     "SkillDescriptor",
     "build_get_task_request",
+    "build_local_a2a_agent",
     "build_message_payload",
     "build_post_request",
     "extract_task_id",

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import os
 import logging
+import os
 from typing import Any, AsyncGenerator, Mapping
+from uuid import uuid4
 
 from google.adk.agents.base_agent import BaseAgent
 from google.adk.agents.invocation_context import InvocationContext
@@ -20,7 +21,6 @@ from agents.skill_route_agent.schemas import (
     RoutedSkillCandidate,
     SkillRouteSchema,
     ZepQueryParams,
-    ZepSearchScope,
 )
 from agents.skill_route_agent.utils.zep_helper import (
     ZepQueryRequest,
@@ -45,19 +45,25 @@ ROUTE_SYSTEM_PROMPT = (
 
 QUERY_PARAMS_SYSTEM_PROMPT = (
     "You are a routing pre-processor.\n"
-    "Convert a user request into one concrete Zep graph search plan.\n"
+    "Convert a user request into one concrete Zep graph.search query plan.\n"
     "Return output that strictly matches the requested schema.\n"
+    "This call uses: graph.search(query, graph_id, scope, limit).\n"
     "Output format fields:\n"
-    "- query: concise search text for Zep.\n"
+    "- query: search text for Zep graph.search (max 400 chars).\n"
     "- scope: one of nodes or edges.\n"
     "- limit: integer from 1 to 20.\n"
     "- graph_id: optional Zep graph id override, empty string to use host GRAPH_ID.\n"
-    "- rationale: short reason these parameters fit the request.\n"
+    "- rationale: short reason these parameters fit graph.search behavior.\n"
     "Rules:\n"
-    "- query should be compact and keyword-rich.\n"
-    "- scope should be nodes unless edges are clearly better.\n"
-    "- limit should be 3-10 for focused retrieval.\n"
+    "- Keep query compact, keyword-rich, and <= 400 characters.\n"
+    "- Remove filler words; keep entities, actions, constraints, and domain terms.\n"
+    "- Use scope='nodes' for entity/topic lookup and broad concept retrieval.\n"
+    "- Use scope='edges' for specific facts, relations, events, or who-did-what details.\n"
+    "- Prefer limit 5 for typical requests; use 3 for narrow lookup, 8-10 for broader recall.\n"
+    "- Do not invent unsupported parameters (no reranker, filters, bfs, or episodes scope).\n"
     "- graph_id can be empty to rely on the configured GRAPH_ID environment variable.\n"
+    "- If user explicitly provides graph_id, copy it exactly; otherwise leave graph_id empty.\n"
+    "- Always output valid schema fields, never prose outside the schema.\n"
 )
 
 
@@ -102,11 +108,11 @@ class SkillRouteAdkAgent(BaseAgent):
     provider: SkipValidation[InferenceProvider | None] = Field(
         default=None, exclude=True, repr=False
     )
-    max_loop_rounds: int = 2
+    max_loop_rounds: int = 5
 
     def provider_settings_overrides(self) -> Mapping[str, Any]:
         """Override default inference settings for this agent if needed."""
-        return {}
+        return {"conversation_store_type": "lru"}
 
     def provider_project_name(self) -> str:
         """Override project name used by inference tracing/context."""
@@ -144,33 +150,36 @@ class SkillRouteAdkAgent(BaseAgent):
 
  
         provider = self._ensure_provider()
-        (llm_generated_params, response_text) = await self._infer_query_params(
-            provider=provider,
-            request_text=request_text,
-            metadata=metadata,
-        )
+        loop_notes: list[str] = []
+        zep_candidates: list[ZepSkillCandidate] = []
+        zep_feedback: str | None = None
+        conversation_id = f"skill_route_query_params_{uuid4().hex}"
 
-        zep_candidates = self.lookup_candidates(
-            llm_generated_params=llm_generated_params,
-            metadata=metadata,
-        )
-
-        loop_notes = [
-            f"round=1 scope={llm_generated_params.scope.value} count={len(zep_candidates)} "
-            f"query={llm_generated_params.query}"
-        ]
-        if not zep_candidates and self.max_loop_rounds > 1:
-            fallback_params = self._build_fallback_query_params(llm_generated_params)
-            if fallback_params is not None:
-                fallback_candidates = self.lookup_candidates(
-                    llm_generated_params=fallback_params,
+        for round_index in range(1, max(1, self.max_loop_rounds) + 1):
+            llm_generated_zep_params = await self._infer_query_params(
+                provider=provider,
+                request_text=request_text,
+                metadata=metadata,
+                conversation_id=conversation_id,
+                zep_feedback=zep_feedback,
+            )
+            try:
+                round_candidates = self.lookup_candidates(
+                    llm_generated_zep_params=llm_generated_zep_params,
                     metadata=metadata,
                 )
-                zep_candidates.extend(fallback_candidates)
-                loop_notes.append(
-                    f"round=2 scope={fallback_params.scope.value} count={len(fallback_candidates)} "
-                    f"query={fallback_params.query}"
-                )
+            except Exception as exc:  # noqa: BLE001
+                zep_error = f"{type(exc).__name__}: {exc}"
+                zep_feedback = zep_error
+                continue
+
+
+            if round_candidates:
+                zep_candidates = round_candidates
+                break
+
+            zep_feedback = "Zep returned zero candidates."
+
         if not zep_candidates:
             return self._build_empty_route(request_text=request_text)
 
@@ -224,12 +233,18 @@ class SkillRouteAdkAgent(BaseAgent):
         provider: InferenceProvider,
         request_text: str,
         metadata: dict[str, Any] | None,
-    ) -> (ZepQueryParams, str):
+        conversation_id: str,
+        zep_feedback: str | None = None,
+    ) -> ZepQueryParams:
+        user_message = request_text.strip()
+        if zep_feedback:
+            user_message = zep_feedback.strip()
         payload = {
             "trace_name": "skill_route_query_params_generation",
             "langfuse_type": "generation",
             "system_prompt": QUERY_PARAMS_SYSTEM_PROMPT,
-            "inputs": [{"type": "text", "content": request_text}],
+            "conversation_id": conversation_id,
+            "user_message": user_message,
             "output_format": ZepQueryParams,
             "metadata": metadata or {},
             "model_parameters": {"temperature": 0.0},
@@ -238,31 +253,21 @@ class SkillRouteAdkAgent(BaseAgent):
         result = await provider.infer(payload)
 
         params = result if isinstance(result, ZepQueryParams) else ZepQueryParams.model_validate(result)
-        if not params.query.strip():
-            return params.model_copy(update={"query": request_text.strip()})
-        return (params, result.text.strip())
-
-    @staticmethod
-    def _build_fallback_query_params(params: ZepQueryParams) -> ZepQueryParams | None:
-        if params.scope == ZepSearchScope.NODES:
-            return params.model_copy(update={"scope": ZepSearchScope.EDGES})
-        if params.scope == ZepSearchScope.EDGES:
-            return params.model_copy(update={"scope": ZepSearchScope.NODES})
-        return None
+        return params
 
     def lookup_candidates(
         self,
         *,
-        llm_generated_params: ZepQueryParams,
+        llm_generated_zep_params: ZepQueryParams,
         metadata: dict[str, Any] | None = None,
     ) -> list[ZepSkillCandidate]:
         zep_component = self._ensure_zep_component()
         metadata_graph_id = str((metadata or {}).get("graph_id") or "").strip()
-        explicit_graph_id = llm_generated_params.graph_id.strip()
+        explicit_graph_id = llm_generated_zep_params.graph_id.strip()
         request = ZepQueryRequest(
-            query=llm_generated_params.query.strip(),
-            scope=llm_generated_params.scope.value,
-            limit=llm_generated_params.limit,
+            query=llm_generated_zep_params.query.strip(),
+            scope=llm_generated_zep_params.scope.value,
+            limit=llm_generated_zep_params.limit,
             graph_id=explicit_graph_id or metadata_graph_id or None,
         )
         return zep_component.execute_query(request)

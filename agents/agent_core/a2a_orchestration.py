@@ -12,7 +12,12 @@ from uuid import uuid4
 
 from starlette.requests import Request
 from vertexai.preview.reasoning_engines import A2aAgent
+import logging
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+)
 
 class OrchestrationMode(str, Enum):
     """High-level orchestration mode for local A2A calls."""
@@ -35,17 +40,37 @@ class A2AFlowResult:
 
 
 # Align with a2a TaskState terminal set used by DefaultRequestHandler.
-_TERMINAL_TASK_STATES = frozenset({"completed", "canceled", "failed", "rejected"})
+_TERMINAL_TASK_STATES = frozenset(
+    {
+        "completed",
+        "canceled",
+        "cancelled",
+        "failed",
+        "rejected",
+        "task_state_completed",
+        "task_state_canceled",
+        "task_state_cancelled",
+        "task_state_failed",
+        "task_state_rejected",
+    }
+)
 
 
 def _is_terminal_task_status(status: str | None) -> bool:
-    return status is not None and status in _TERMINAL_TASK_STATES
+    if status is None:
+        return False
+    return status.strip().lower() in _TERMINAL_TASK_STATES
 
 
 def _extract_task_status(task_response: Any) -> str | None:
     if not isinstance(task_response, Mapping):
         return None
-    task = task_response.get("task")
+    task: Mapping[str, Any] | None = None
+    if isinstance(task_response.get("task"), Mapping):
+        task = task_response.get("task")
+    else:
+        # Some A2A handlers return the task object directly from `on_get_task`.
+        task = task_response
     if not isinstance(task, Mapping):
         return None
     raw_status = task.get("status")
@@ -205,6 +230,7 @@ async def run_local_a2a_orchestration(
                     f"A2A task {task_id!r} did not reach a terminal state within "
                     f"{task_poll_timeout_sec}s (last status: {status!r})"
                 )
+            logging.info(f"A2A task {task_id!r} time: {task_poll_timeout_sec}s / {deadline} (last status: {status!r})")
             await asyncio.sleep(task_poll_interval_sec)
 
     return A2AFlowResult(

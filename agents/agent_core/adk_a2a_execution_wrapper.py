@@ -127,7 +127,10 @@ class AdkA2aExecutionWrapper(AgentExecutor, ABC):
             context.message.metadata if isinstance(context.message.metadata, dict) else {}
         )
         trace_context = extract_langfuse_trace_context(incoming_metadata)
-        user_id = incoming_metadata.get("user_id") if incoming_metadata else "a2a_user"
+        raw_user_id = incoming_metadata.get("user_id") if incoming_metadata else None
+        user_id = str(raw_user_id).strip() if raw_user_id is not None else ""
+        if not user_id:
+            user_id = "a2a_user"
         graph_state_delta: dict[str, Any] | None = None
         if "graph_id" in incoming_metadata:
             raw_gid = incoming_metadata.get("graph_id")

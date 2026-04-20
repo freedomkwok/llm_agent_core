@@ -75,34 +75,32 @@ class ZepSkillSearchComponent:
     ) -> None:
         resolved_api_key = (api_key or os.getenv("ZEP_API_KEY", "")).strip()
         self.default_graph_id = (default_graph_id or os.getenv("GRAPH_ID", "")).strip()
-        self.client = Zep(api_key=resolved_api_key) if resolved_api_key else None
+        
+        if resolved_api_key:
+            self.client = Zep(api_key=resolved_api_key)
+        else: 
+            raise ValueError("ZEP_API_KEY is not set")
+        self.api_key = resolved_api_key
 
     @property
     def is_configured(self) -> bool:
         return self.client is not None
 
-    def search_skills(
-        self,
-        *,
-        query: str,
-        graph_id: str | None = None,
-        limit: int = 5,
-        scope: str = "nodes",
-    ) -> list[ZepSkillCandidate]:
-        """Search Zep graph scope and normalize results into skill candidates."""
+    def execute_query(self, request: ZepQueryRequest) -> list[ZepSkillCandidate]:
+        """Execute a typed Zep query request and return normalized candidates."""
         if not self.client:
             return []
 
-        resolved_graph_id = (graph_id or self.default_graph_id).strip()
-        if not resolved_graph_id or not query.strip():
+        resolved_graph_id = (request.graph_id or self.default_graph_id).strip()
+        if not resolved_graph_id or not request.query.strip():
             return []
 
-        normalized_scope = "edges" if str(scope).strip().lower() == "edges" else "nodes"
+        normalized_scope = "edges" if str(request.scope).strip().lower() == "edges" else "nodes"
         response = self.client.graph.search(
-            query=query,
+            query=request.query,
             graph_id=resolved_graph_id,
             scope=normalized_scope,
-            limit=limit,
+            limit=request.limit,
         )
         raw_records = (
             getattr(response, "edges", None)
@@ -114,15 +112,6 @@ class ZepSkillSearchComponent:
             for candidate in (self._normalize_record(record) for record in raw_records)
             if candidate
         ]
-
-    def execute_query(self, request: ZepQueryRequest) -> list[ZepSkillCandidate]:
-        """Execute a typed Zep query request and return normalized candidates."""
-        return self.search_skills(
-            query=request.query,
-            graph_id=request.graph_id,
-            limit=request.limit,
-            scope=request.scope,
-        )
 
     def _normalize_record(self, record: Any) -> ZepSkillCandidate | None:
         raw = _to_plain_dict(record)

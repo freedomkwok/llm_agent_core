@@ -13,7 +13,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from agents.agent_core import OrchestrationMode, run_local_a2a_orchestration
-from agents.skill_route_agent.a2a_agent import build_local_a2a_skill_route_agent
+from agents.skill_route_agent.registry import build_local_a2a_skill_route_agent
 
 
 async def _main() -> None:
