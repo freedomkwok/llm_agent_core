@@ -1770,7 +1770,7 @@ requires-dist = [
     { name = "ipykernel", marker = "extra == 'jupyter'", specifier = ">=6.29.0" },
     { name = "langfuse", specifier = ">=4.0.0" },
     { name = "litellm", specifier = ">=1.75.5" },
-    { name = "llm-inference-core", directory = "../llm_inference_core" },
+    { name = "llm-inference-core", editable = "../llm_inference_core" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10.0" },
     { name = "pydantic", specifier = ">=2.8.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.2.0" },
@@ -2246,7 +2246,7 @@ wheels = [
 [[package]]
 name = "llm-inference-core"
 version = "0.1.0"
-source = { directory = "../llm_inference_core" }
+source = { editable = "../llm_inference_core" }
 dependencies = [
     { name = "langfuse" },
     { name = "openai", version = "2.30.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14'" },
@@ -2264,6 +2264,7 @@ requires-dist = [
     { name = "pydantic-settings" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8" },
     { name = "tenacity" },
+    { name = "zep-cloud", marker = "extra == 'zep'", specifier = ">=2.0.0" },
 ]
 
 [[package]]

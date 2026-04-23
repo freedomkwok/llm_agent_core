@@ -1,0 +1,23 @@
+card_config:
+  agent_name: Zep Tool Agent
+  description: >
+    An LLM tool-calling agent that uses Zep graph search and node-edge exploration
+    to pick a strong skill candidate.
+  skills:
+    - id: route_with_zep_tools
+      name: Route With Zep Tools
+      description: Uses Zep graph tools to inspect nodes/edges and choose the best skill candidate.
+      tags:
+        - routing
+        - zep
+        - tool-calling
+        - skill-selection
+      examples:
+        - Search which skill should handle this user request.
+        - Inspect node edges and choose the strongest skill match.
+
+executor_config:
+  adk_agent_builder: agents.zep_agent.a2a_agent_core.build_zep_llm_agent
+  trace_name: zep_agent_executor_execute
+  artifact_name: zep_agent
+  failed_text_message: Failed to generate a zep agent response with text content.

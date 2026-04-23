@@ -26,6 +26,7 @@ from agents.skill_route_agent.utils.zep_helper import (
     ZepQueryRequest,
     ZepSkillCandidate,
     ZepSkillSearchComponent,
+    format_candidate_for_prompt,
 )
 
 bootstrap_env()
@@ -297,14 +298,7 @@ class SkillRouteAdkAgent(BaseAgent):
         zep_candidates: list[ZepSkillCandidate],
     ) -> str:
         formatted_candidates = "\n".join(
-            [
-                (
-                    f"- skill_id: {candidate.skill_id}\n"
-                    f"  name: {candidate.name}\n"
-                    f"  description: {candidate.description or 'No description provided.'}"
-                )
-                for candidate in zep_candidates
-            ]
+            format_candidate_for_prompt(candidate) for candidate in zep_candidates
         )
         return (
             f"User request:\n{request_text.strip()}\n\n"

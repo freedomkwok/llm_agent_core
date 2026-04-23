@@ -9,7 +9,7 @@ uvicorn>=0.34.0
 zep-cloud>=3.0.0
 a2a-sdk>=0.3.4
 google-cloud-aiplatform[adk,agent_engines]>=1.112.0
-llm-inference-core @ file:///Users/freedomkwokmacbookpro/Github/imp/llm_inference_core
+llm-inference-core
 
 [dev]
 pytest>=8.2.0

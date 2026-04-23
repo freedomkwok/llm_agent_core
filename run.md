@@ -38,3 +38,20 @@ Planner + workflow expansion
  incremental planning
 或者
 graph-guided step expansion
+
+
+ RRF is fusion, MMR is diversification, 
+ if you want something cheaper/faster and more forgiving. RRF is a strong baseline because it blends keyword and semantic matching well. For skill routing, that matters when your skill names, labels, triggers, and descriptions may match partly by exact phrasing and partly by semantic similarity.  
+
+ cross encoder is semantic pairwise scoring, 
+ because routing is usually a precision problem, not a diversity problem. You usually want “which single skill best matches the current task?” not “give me a broad, non-redundant spread of skills.” Zep explicitly positions cross encoder as the best choice when accuracy in relevance scoring matters most. That lines up very well with routing
+
+ episode mentions is recurrence-based,
+and node distance is graph-topology-based
+
+1.	Search skills with scope="nodes" using a strong skill query.
+	2.	Start with reranker="cross_encoder".
+	3.	Take top 5–10 candidate skills.
+	4.	Then do your own app-level rerank using fields like applies_when, not_applies_when, dependency readiness, and risk penalties.
+
+

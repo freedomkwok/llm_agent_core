@@ -15,8 +15,20 @@
       "envFile": "${workspaceFolder}/agents/skill_route_agent/.env",
       "justMyCode": false
     },
-
-
+    {
+      "name": "Zep Agent: run_local (A2A debug)",
+      "type": "python",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "program": "${workspaceFolder}/agents/zep_agent/run_local.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/agents/zep_agent",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "envFile": "${workspaceFolder}/agents/zep_agent/.env",
+      "justMyCode": false
+    },
     {
       "name": "A2A Example: 05 Test Local Calls",
       "type": "python",
