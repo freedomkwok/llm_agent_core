@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from enum import Enum
 from typing import Any, AsyncGenerator, Mapping
 
 from google.adk.models.base_llm import BaseLlm
@@ -12,7 +13,6 @@ from google.genai import types
 from pydantic import BaseModel, Field
 
 from agents.agent_core.inference_provider import create_inference_provider
-from llm_inference_core import read_langfuse_trace_context_from_env
 from llm_inference_core.providers import InferenceProvider
 
 _MODEL_PARAM_NAMES = (
@@ -23,6 +23,15 @@ _MODEL_PARAM_NAMES = (
     "frequency_penalty",
     "seed",
 )
+_JSON_SCHEMA_TYPE_MAP: dict[str, str] = {
+    "OBJECT": "object",
+    "ARRAY": "array",
+    "STRING": "string",
+    "NUMBER": "number",
+    "INTEGER": "integer",
+    "BOOLEAN": "boolean",
+    "NULL": "null",
+}
 
 
 class InferenceProviderLlmAdapter(BaseLlm):
@@ -102,22 +111,15 @@ class InferenceProviderLlmAdapter(BaseLlm):
     @staticmethod
     def _preset_downstream_parent_span_payload(llm_request: LlmRequest) -> dict[str, str]:
         labels = getattr(llm_request.config, "labels", None)
-        env_trace_context = read_langfuse_trace_context_from_env()
-        trace_id = None
-        parent_span_id = None
+        trace_id: str | None = None
+        parent_span_id: str | None = None
         if isinstance(labels, Mapping):
-            raw_trace_id = labels.get("trace_id")
-            if isinstance(raw_trace_id, str) and raw_trace_id.strip():
-                trace_id = raw_trace_id.strip()
-            raw_parent = labels.get("parent_span_id") or labels.get("parent_observation_id")
-            if isinstance(raw_parent, str) and raw_parent.strip():
-                parent_span_id = raw_parent.strip()
-
-        if not trace_id:
-            trace_id = env_trace_context.trace_id
-        # For nested provider calls, downstream parent should follow current chain env first.
-        if env_trace_context.parent_span_id:
-            parent_span_id = env_trace_context.parent_span_id
+            raw_tid = labels.get("trace_id")
+            if isinstance(raw_tid, str) and raw_tid.strip():
+                trace_id = raw_tid.strip()
+            raw_pid = labels.get("parent_span_id") or labels.get("parent_observation_id")
+            if isinstance(raw_pid, str) and raw_pid.strip():
+                parent_span_id = raw_pid.strip()
 
         trace_payload: dict[str, str] = {}
         if trace_id:
@@ -187,6 +189,12 @@ class InferenceProviderLlmAdapter(BaseLlm):
                 parameters = declaration.parameters
                 if hasattr(parameters, "model_dump"):
                     parameters = parameters.model_dump(by_alias=True, exclude_none=True)
+                if isinstance(parameters, Mapping):
+                    parameters = InferenceProviderLlmAdapter._normalize_openai_schema_types(
+                        dict(parameters)
+                    )
+                else:
+                    parameters = {}
                 tools.append(
                     {
                         "type": "function",
@@ -196,6 +204,43 @@ class InferenceProviderLlmAdapter(BaseLlm):
                     }
                 )
         return tools
+
+    @staticmethod
+    def _normalize_openai_schema_types(
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        normalized: dict[str, Any] = {}
+        for key, raw_value in payload.items():
+            normalized[key] = InferenceProviderLlmAdapter._normalize_openai_schema_value(
+                raw_value,
+                current_key=key,
+            )
+        return normalized
+
+    @staticmethod
+    def _normalize_openai_schema_value(
+        value: Any,
+        *,
+        current_key: str | None = None,
+    ) -> Any:
+        if isinstance(value, Enum):
+            value = value.value
+
+        if isinstance(value, Mapping):
+            return InferenceProviderLlmAdapter._normalize_openai_schema_types(dict(value))
+
+        if isinstance(value, list):
+            return [
+                InferenceProviderLlmAdapter._normalize_openai_schema_value(
+                    item,
+                    current_key=current_key,
+                )
+                for item in value
+            ]
+
+        if current_key == "type" and isinstance(value, str):
+            return _JSON_SCHEMA_TYPE_MAP.get(value, value.lower())
+        return value
 
     @staticmethod
     def _model_parameters(llm_request: LlmRequest) -> dict[str, Any]:

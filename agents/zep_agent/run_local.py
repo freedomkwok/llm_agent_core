@@ -19,7 +19,7 @@ async def _main() -> None:
     a2a_agent = build_local_a2a_zep_agent(mode=mode)
     result = await run_local_a2a_orchestration(
         a2a_agent=a2a_agent,
-        message_text="route this request to the best skill",
+        message_text="route this request to the best skill on graph proj_63edb3c4f72f",
         mode=mode,
         metadata={"graph_id": "proj_63edb3c4f72f"},
     )

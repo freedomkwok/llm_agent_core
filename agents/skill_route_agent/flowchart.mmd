@@ -16,7 +16,7 @@ flowchart TD
     S0 --> S
 
     S --> E["SkillRouteA2aExecutor.execute"]
-    E --> L["run_with_langfuse_chain_trace"]
+    E --> L["run_with_langfuse_trace (chain)"]
     L --> N["ADK Runner.run_async"]
     N --> A["SkillRouteAdkAgent._run_async_impl"]
     A --> Z["ZepSkillSearchComponent + llm_inference_core"]

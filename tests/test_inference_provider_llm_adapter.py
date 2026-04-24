@@ -142,26 +142,39 @@ def test_adapter_maps_provider_tool_calls_to_function_call_parts() -> None:
     assert parts[0].function_call.args == {"query": "payments"}
 
 
-def test_adapter_includes_trace_ids_from_env_when_labels_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("A2A_TRACE_ID", "trace_from_env")
-    monkeypatch.setenv("A2A_PARENT_OBSERVATION_ID", "parent_from_env")
+def test_adapter_normalizes_google_schema_type_enums_for_openai_tools() -> None:
     provider = FakeProvider()
     adapter = InferenceProviderLlmAdapter(model="gpt-4.1-mini", provider=provider)
-    request = _request_with_text(user_text="trace from env")
+    request = _request_with_text(user_text="find payment skills")
+    request.config.tools = [
+        types.Tool(
+            function_declarations=[
+                types.FunctionDeclaration(
+                    name="search_skill_nodes",
+                    description="Search skills by query and limit",
+                    parameters={
+                        "type": "OBJECT",
+                        "properties": {
+                            "query": {"type": "STRING"},
+                            "limit": {"type": "INTEGER"},
+                        },
+                        "required": ["query"],
+                    },
+                )
+            ]
+        )
+    ]
 
     _run_collect(adapter, request, stream=False)
 
     payload = provider.payloads[0]
-    assert payload["trace_id"] == "trace_from_env"
-    assert payload["parent_span_id"] == "parent_from_env"
-    assert payload["parent_observation_id"] == "parent_from_env"
+    assert payload["tools"][0]["parameters"]["type"] == "object"
+    assert payload["tools"][0]["parameters"]["properties"]["query"]["type"] == "string"
+    assert payload["tools"][0]["parameters"]["properties"]["limit"]["type"] == "integer"
+    assert payload["tools"][0]["parameters"]["required"] == ["query"]
 
 
-def test_adapter_uses_env_parent_span_even_when_labels_have_parent_observation(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setenv("A2A_TRACE_ID", "trace_from_env")
-    monkeypatch.setenv("A2A_PARENT_SPAN_ID", "parent_from_env")
+def test_adapter_includes_trace_ids_from_labels() -> None:
     provider = FakeProvider()
     adapter = InferenceProviderLlmAdapter(model="gpt-4.1-mini", provider=provider)
     request = _request_with_text(user_text="trace from labels")
@@ -174,5 +187,18 @@ def test_adapter_uses_env_parent_span_even_when_labels_have_parent_observation(
 
     payload = provider.payloads[0]
     assert payload["trace_id"] == "trace_from_labels"
-    assert payload["parent_span_id"] == "parent_from_env"
-    assert payload["parent_observation_id"] == "parent_from_env"
+    assert payload["parent_span_id"] == "parent_from_labels"
+    assert payload["parent_observation_id"] == "parent_from_labels"
+
+
+def test_adapter_omits_trace_payload_when_labels_missing() -> None:
+    provider = FakeProvider()
+    adapter = InferenceProviderLlmAdapter(model="gpt-4.1-mini", provider=provider)
+    request = _request_with_text(user_text="trace missing labels")
+
+    _run_collect(adapter, request, stream=False)
+
+    payload = provider.payloads[0]
+    assert "trace_id" not in payload
+    assert "parent_span_id" not in payload
+    assert "parent_observation_id" not in payload

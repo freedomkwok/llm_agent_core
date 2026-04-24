@@ -17,7 +17,7 @@ from google.adk.artifacts import InMemoryArtifactService
 from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
-from llm_inference_core import extract_langfuse_trace_context, run_with_langfuse_chain_trace
+from llm_inference_core import run_with_langfuse_trace
 
 
 class AdkA2aExecutionWrapper(AgentExecutor, ABC):
@@ -126,7 +126,17 @@ class AdkA2aExecutionWrapper(AgentExecutor, ABC):
         incoming_metadata = (
             context.message.metadata if isinstance(context.message.metadata, dict) else {}
         )
-        trace_context = extract_langfuse_trace_context(incoming_metadata)
+        trace_id: str | None = None
+        parent_span_id: str | None = None
+        if incoming_metadata:
+            raw_tid = incoming_metadata.get("trace_id")
+            if isinstance(raw_tid, str) and raw_tid.strip():
+                trace_id = raw_tid.strip()
+            raw_pid = incoming_metadata.get("parent_span_id") or incoming_metadata.get(
+                "parent_observation_id"
+            )
+            if isinstance(raw_pid, str) and raw_pid.strip():
+                parent_span_id = raw_pid.strip()
         raw_user_id = incoming_metadata.get("user_id") if incoming_metadata else None
         user_id = str(raw_user_id).strip() if raw_user_id is not None else ""
         if not user_id:
@@ -158,14 +168,18 @@ class AdkA2aExecutionWrapper(AgentExecutor, ABC):
                 status = "completed" if isinstance(result, str) and result else "failed"
                 observation.update(output={"status": status, "task_id": context.task_id})
 
-            response_text = await run_with_langfuse_chain_trace(
+            trace_metadata = self.build_trace_metadata(context=context)
+            response_text = await run_with_langfuse_trace(
                 langfuse=self.langfuse_client,
+                langfuse_type="chain",
                 trace_name=self.trace_name,
                 trace_input=self.build_trace_input(request_text=request_text, context=context),
                 runner=_run_chain,
-                trace_context=trace_context,
-                metadata=self.build_trace_metadata(context=context),
                 on_success=_on_chain_success,
+                metadata=trace_metadata,
+                trace_id=trace_id,
+                parent_span_id=parent_span_id,
+                flush_on_exit=True,
             )
             if response_text:
                 await updater.add_artifact([TextPart(text=response_text)], name=self.artifact_name)
