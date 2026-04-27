@@ -230,7 +230,7 @@ async def run_local_a2a_orchestration(
                     f"A2A task {task_id!r} did not reach a terminal state within "
                     f"{task_poll_timeout_sec}s (last status: {status!r})"
                 )
-            logging.info(f"A2A task {task_id!r} time: {task_poll_timeout_sec}s / {deadline} (last status: {status!r})")
+            # logging.info(f"A2A task {task_id!r} time: {task_poll_timeout_sec}s / {deadline} (last status: {status!r})")
             await asyncio.sleep(task_poll_interval_sec)
 
     return A2AFlowResult(

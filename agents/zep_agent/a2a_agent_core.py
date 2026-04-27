@@ -57,13 +57,13 @@ def build_zep_llm_agent(*, langfuse_client: Any = None) -> LlmAgent:
             You are a Zep Agent, you are given a user request and you need to use the tools to retrieve information base on use query
             """
         ),
-        tools=[zep_skill_toolset],
-        # tools=[
-        #     search_nodes,
-        #     get_edges_for_node,
-        #     search_edges,
-        #     get_node_by_id,
-        #     search_around_node,
-        # ],
+        tools=[
+            search_nodes,
+            get_edges_for_node,
+            search_edges,
+            get_node_by_id,
+            search_around_node,
+        ],
+            #   tools=[zep_skill_toolset],
     )
 

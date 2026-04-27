@@ -74,11 +74,8 @@ def test_adapter_maps_request_and_returns_text_response() -> None:
 
     payload = provider.payloads[0]
     assert payload["model_name"] == "gpt-4.1-mini"
+    assert payload["instructions"] == "You are a routing agent."
     assert payload["common_input"] == [
-        {
-            "role": "system",
-            "content": [{"type": "input_text", "text": "You are a routing agent."}],
-        },
         {
             "role": "user",
             "content": [{"type": "input_text", "text": "route this request"}],
@@ -229,3 +226,86 @@ def test_adapter_omits_trace_payload_when_labels_missing() -> None:
     assert "trace_id" not in payload
     assert "parent_span_id" not in payload
     assert "parent_observation_id" not in payload
+
+
+def test_function_call_output_items_wraps_json_payload_with_typed_item() -> None:
+    output_items = InferenceProviderLlmAdapter._function_call_output_items(
+        {"answer": "ok", "score": 0.8}
+    )
+    assert output_items == [
+        {
+            "type": "output_text",
+            "text": '{"answer": "ok", "score": 0.8}',
+        }
+    ]
+
+
+def test_function_call_output_items_keeps_pre_typed_output_items() -> None:
+    output_items = InferenceProviderLlmAdapter._function_call_output_items(
+        [{"type": "output_text", "text": "already typed"}]
+    )
+    assert output_items == [{"type": "output_text", "text": "already typed"}]
+
+
+def test_normalized_function_call_arguments_keeps_mapping_payload() -> None:
+    normalized = InferenceProviderLlmAdapter._normalized_function_call_arguments(
+        {"query": "hanli", "limit": 5}
+    )
+    assert normalized == {"query": "hanli", "limit": 5}
+
+
+def test_normalized_function_call_arguments_parses_json_string_payload() -> None:
+    normalized = InferenceProviderLlmAdapter._normalized_function_call_arguments(
+        '{"query":"hanli","limit":5}'
+    )
+    assert normalized == {"query": "hanli", "limit": 5}
+
+
+def test_common_input_preserves_assistant_function_call_before_tool_output() -> None:
+    request = LlmRequest(
+        model="gpt-4.1-mini",
+        contents=[
+            types.Content(role="user", parts=[types.Part(text="find facts")]),
+            types.Content(
+                role="model",
+                parts=[
+                    types.Part(
+                        function_call=types.FunctionCall(
+                            id="call_123",
+                            name="search_edges",
+                            args={"query": "mirofish"},
+                        )
+                    )
+                ],
+            ),
+            types.Content(
+                role="user",
+                parts=[
+                    types.Part(
+                        function_response=types.FunctionResponse(
+                            id="call_123",
+                            name="search_edges",
+                            response={"count": 1},
+                        )
+                    )
+                ],
+            ),
+        ],
+    )
+
+    common_input = InferenceProviderLlmAdapter._common_input_from_contents(request)
+
+    assert common_input == [
+        {"role": "user", "content": [{"type": "input_text", "text": "find facts"}]},
+        {
+            "type": "function_call",
+            "call_id": "call_123",
+            "name": "search_edges",
+            "arguments": '{"query": "mirofish"}',
+        },
+        {
+            "type": "function_call_output",
+            "call_id": "call_123",
+            "output": [{"type": "output_text", "text": '{"count": 1}'}],
+        },
+    ]

@@ -91,6 +91,7 @@ class InferenceProviderLlmAdapter(BaseLlm):
 
     def _build_provider_payload(self, llm_request: LlmRequest) -> dict[str, Any]:
         common_input = self._common_input_from_contents(llm_request)
+        instructions = self._system_prompt_text(llm_request)
         openai_tools = self._openai_tools_from_request(llm_request)
         trace_payload = self._preset_downstream_parent_span_payload(llm_request)
         metadata: dict[str, Any] = {}
@@ -107,6 +108,8 @@ class InferenceProviderLlmAdapter(BaseLlm):
         }
         if openai_tools:
             payload["tools"] = openai_tools
+        if instructions:
+            payload["instructions"] = instructions
         return payload
 
     @staticmethod
@@ -146,14 +149,6 @@ class InferenceProviderLlmAdapter(BaseLlm):
     @staticmethod
     def _common_input_from_contents(llm_request: LlmRequest) -> list[dict[str, Any]]:
         items: list[dict[str, Any]] = []
-        system_prompt = InferenceProviderLlmAdapter._system_prompt_text(llm_request)
-        if system_prompt:
-            items.append(
-                {
-                    "role": "system",
-                    "content": [{"type": "input_text", "text": system_prompt}],
-                }
-            )
         for content in llm_request.contents:
             role = content.role or "user"
             message_parts: list[dict[str, Any]] = []
@@ -163,24 +158,108 @@ class InferenceProviderLlmAdapter(BaseLlm):
                     if text:
                         message_parts.append({"type": "input_text", "text": text})
                     continue
+                if part.function_call:
+                    if message_parts:
+                        items.append({"role": role, "content": message_parts})
+                        message_parts = []
+                    function_call = InferenceProviderLlmAdapter._function_call_input_item(
+                        part.function_call
+                    )
+                    if function_call is not None:
+                        items.append(function_call)
+                    continue
                 if part.function_response:
                     if message_parts:
                         items.append({"role": role, "content": message_parts})
                         message_parts = []
-                    response_payload: Any = part.function_response.response
-                    if not isinstance(response_payload, str):
-                        response_payload = json.dumps(response_payload, ensure_ascii=True)
-                    call_id = part.function_response.id or part.function_response.name
+                    call_id = InferenceProviderLlmAdapter._resolved_call_id(
+                        part.function_response.id,
+                        part.function_response.name,
+                    )
+                    if call_id is None:
+                        continue
                     items.append(
                         {
                             "type": "function_call_output",
                             "call_id": call_id,
-                            "output": response_payload,
+                            "output": InferenceProviderLlmAdapter._function_call_output_items(
+                                part.function_response.response
+                            ),
                         }
                     )
             if message_parts:
                 items.append({"role": role, "content": message_parts})
         return items
+
+    @staticmethod
+    def _resolved_call_id(raw_id: Any, raw_name: Any) -> str | None:
+        if isinstance(raw_id, str):
+            call_id = raw_id.strip()
+            if call_id:
+                return call_id
+        if isinstance(raw_name, str):
+            candidate = raw_name.strip()
+            if candidate.startswith("call_"):
+                return candidate
+        return None
+
+    @staticmethod
+    def _function_call_input_item(function_call: Any) -> dict[str, Any] | None:
+        name = getattr(function_call, "name", None)
+        if not isinstance(name, str) or not name.strip():
+            return None
+        call_id = InferenceProviderLlmAdapter._resolved_call_id(
+            getattr(function_call, "id", None),
+            name,
+        )
+        if call_id is None:
+            return None
+        arguments = InferenceProviderLlmAdapter._normalized_function_call_arguments(
+            getattr(function_call, "args", {})
+        )
+        return {
+            "type": "function_call",
+            "call_id": call_id,
+            "name": name.strip(),
+            "arguments": json.dumps(arguments, ensure_ascii=True),
+        }
+
+    @staticmethod
+    def _normalized_function_call_arguments(raw_args: Any) -> dict[str, Any]:
+        if hasattr(raw_args, "model_dump"):
+            raw_args = raw_args.model_dump(mode="json")
+        if isinstance(raw_args, Mapping):
+            return dict(raw_args)
+        if isinstance(raw_args, str):
+            stripped = raw_args.strip()
+            if not stripped:
+                return {}
+            try:
+                loaded = json.loads(stripped)
+            except json.JSONDecodeError:
+                return {}
+            if isinstance(loaded, dict):
+                return loaded
+        return {}
+
+    @staticmethod
+    def _function_call_output_items(response_payload: Any) -> list[dict[str, Any]]:
+        if isinstance(response_payload, list):
+            normalized_items: list[dict[str, Any]] = []
+            for item in response_payload:
+                if not isinstance(item, dict):
+                    continue
+                item_type = item.get("type")
+                if isinstance(item_type, str) and item_type.strip():
+                    normalized_items.append(dict(item))
+            if normalized_items:
+                return normalized_items
+
+        if isinstance(response_payload, str):
+            text = response_payload
+        else:
+            text = json.dumps(response_payload, ensure_ascii=True)
+        return [{"type": "output_text", "text": text}]
 
     @staticmethod
     def _openai_tools_from_request(llm_request: LlmRequest) -> list[dict[str, Any]]:
