@@ -36,6 +36,23 @@ def extract_items(container: Any, *, preferred_keys: tuple[str, ...]) -> list[An
     return []
 
 
+def trim_node_fields(raw_node: Any) -> dict[str, Any]:
+    node_payload = to_plain_dict(raw_node)
+    summary = node_payload.get("summary")
+    score = node_payload.get("score")
+    return {
+        "name": node_payload.get("name"),
+        "attributes": node_payload.get("attributes")
+        if isinstance(node_payload.get("attributes"), dict)
+        else {},
+        "metadata": node_payload.get("metadata")
+        if isinstance(node_payload.get("metadata"), dict)
+        else {},
+        "summary": summary if isinstance(summary, str) else "",
+        "score": score if isinstance(score, (int, float)) else None,
+    }
+
+
 @dataclass(frozen=True)
 class ZepToolRequest:
     query: str

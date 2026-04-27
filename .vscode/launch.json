@@ -1,20 +1,20 @@
 {
   "version": "0.2.0",
   "configurations": [
-    {
-      "name": "Skill Router: Local Flow Debug",
-      "type": "python",
-      "request": "launch",
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "program": "${workspaceFolder}/agents/skill_route_agent/run_local.py",
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/agents/skill_route_agent",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      },
-      "envFile": "${workspaceFolder}/agents/skill_route_agent/.env",
-      "justMyCode": false
-    },
+    // {
+    //   "name": "Skill Router: Local Flow Debug",
+    //   "type": "python",
+    //   "request": "launch",
+    //   "python": "${workspaceFolder}/.venv/bin/python",
+    //   "program": "${workspaceFolder}/agents/skill_route_agent/run_local.py",
+    //   "console": "integratedTerminal",
+    //   "cwd": "${workspaceFolder}/agents/skill_route_agent",
+    //   "env": {
+    //     "PYTHONPATH": "${workspaceFolder}"
+    //   },
+    //   "envFile": "${workspaceFolder}/agents/skill_route_agent/.env",
+    //   "justMyCode": false
+    // },
     {
       "name": "Zep Agent: run_local (A2A debug)",
       "type": "python",
@@ -41,6 +41,20 @@
         "PYTHONPATH": "${workspaceFolder}"
       },
       "envFile": "${workspaceFolder}/.env",
+      "justMyCode": false
+    },
+    {
+      "name": "Zep Agent: test_zep_agent_connectivity",
+      "type": "python",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "program": "${workspaceFolder}/agents/zep_agent/tests/test_zep_agent_connectivity.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "envFile": "${workspaceFolder}/agents/zep_agent/.env",
       "justMyCode": false
     }
   ]

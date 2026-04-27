@@ -19,9 +19,9 @@ async def _main() -> None:
     a2a_agent = build_local_a2a_zep_agent(mode=mode)
     result = await run_local_a2a_orchestration(
         a2a_agent=a2a_agent,
-        message_text="route this request to the best skill on graph proj_63edb3c4f72f",
+        message_text="韩立最喜欢谁？on graph mirofish_53c089d117c649c7",
         mode=mode,
-        metadata={"graph_id": "proj_63edb3c4f72f"},
+        metadata={"graph_id": "mirofish_53c089d117c649c7"},
     )
     print("task_id:", result.task_id)
     print("task_status:", result.task_status)

@@ -29,6 +29,7 @@ from agents.agent_core.agent_registry import DynamicAgentRegistry
 from agents.agent_core.agent_resolver import AgentResolver
 from agents.agent_core.host_orchestrator import HostOrchestrator
 from agents.agent_core.inference_provider_llm_adapter import InferenceProviderLlmAdapter
+from agents.agent_core.adk_llm_agent_base import UserRoleNormalizedLlmAgent
 
 __all__ = [
     "A2AFlowResult",
@@ -54,4 +55,5 @@ __all__ = [
     "build_post_request",
     "extract_task_id",
     "run_local_a2a_orchestration",
+    "UserRoleNormalizedLlmAgent",
 ]

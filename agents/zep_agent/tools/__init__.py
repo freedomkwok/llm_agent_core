@@ -5,7 +5,7 @@ from agents.zep_agent.tools.zep_tools import (
     get_node_by_id,
     search_around_node,
     search_edges,
-    search_skill_nodes,
+    search_nodes,
 )
 
 __all__ = [
@@ -13,6 +13,6 @@ __all__ = [
     "get_node_by_id",
     "search_around_node",
     "search_edges",
-    "search_skill_nodes",
+    "search_nodes",
 ]
 

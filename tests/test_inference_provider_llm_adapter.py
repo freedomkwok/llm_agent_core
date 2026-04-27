@@ -122,7 +122,7 @@ def test_adapter_maps_provider_tool_calls_to_function_call_parts() -> None:
                 tool_calls=[
                     {
                         "id": "call_123",
-                        "name": "search_skill_nodes",
+                        "name": "search_nodes",
                         "arguments": {"query": "payments"},
                     }
                 ],
@@ -137,7 +137,34 @@ def test_adapter_maps_provider_tool_calls_to_function_call_parts() -> None:
     parts = responses[0].content.parts
     assert len(parts) == 1
     assert parts[0].function_call is not None
-    assert parts[0].function_call.name == "search_skill_nodes"
+    assert parts[0].function_call.name == "search_nodes"
+    assert parts[0].function_call.id == "call_123"
+    assert parts[0].function_call.args == {"query": "payments"}
+
+
+def test_adapter_skips_malformed_tool_calls_and_normalizes_string_arguments() -> None:
+    class ToolCallProvider:
+        async def infer(self, payload):
+            del payload
+            return FakeInferToolCallResult(
+                text="",
+                tool_calls=[
+                    {"id": "call_invalid_blank", "name": "   ", "arguments": {"query": "ignore"}},
+                    {"id": "call_invalid_chars", "name": "bad name!", "arguments": {"query": "ignore"}},
+                    {"id": "call_123", "name": "search_nodes", "arguments": '{"query":"payments"}'},
+                ],
+            )
+
+    adapter = InferenceProviderLlmAdapter(model="gpt-4.1-mini", provider=ToolCallProvider())
+    request = _request_with_text(user_text="find payment skills")
+    responses = _run_collect(adapter, request, stream=False)
+
+    assert len(responses) == 1
+    assert responses[0].content is not None
+    parts = responses[0].content.parts
+    assert len(parts) == 1
+    assert parts[0].function_call is not None
+    assert parts[0].function_call.name == "search_nodes"
     assert parts[0].function_call.id == "call_123"
     assert parts[0].function_call.args == {"query": "payments"}
 
@@ -150,7 +177,7 @@ def test_adapter_normalizes_google_schema_type_enums_for_openai_tools() -> None:
         types.Tool(
             function_declarations=[
                 types.FunctionDeclaration(
-                    name="search_skill_nodes",
+                    name="search_nodes",
                     description="Search skills by query and limit",
                     parameters={
                         "type": "OBJECT",

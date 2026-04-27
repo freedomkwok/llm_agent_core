@@ -1,4 +1,0 @@
-adk_agent_builder: agents.skill_route_agent.a2a_agent_core.SkillRouteAdkAgent
-trace_name: skill_route_executor_execute
-artifact_name: skill_route
-failed_text_message: Failed to generate a skill routing response with text content.

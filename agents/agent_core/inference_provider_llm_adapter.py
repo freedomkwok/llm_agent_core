@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from enum import Enum
+import re
 from typing import Any, AsyncGenerator, Mapping
 
 from google.adk.models.base_llm import BaseLlm
@@ -271,13 +272,29 @@ class InferenceProviderLlmAdapter(BaseLlm):
             if not isinstance(tool_call, dict):
                 continue
             name = tool_call.get("name")
-            if not isinstance(name, str) or not name:
+            if not isinstance(name, str):
+                continue
+            normalized_name = name.strip()
+            if not normalized_name:
+                continue
+            if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", normalized_name):
                 continue
             raw_args = tool_call.get("arguments", {})
-            args = raw_args if isinstance(raw_args, dict) else {}
+            if isinstance(raw_args, str):
+                stripped_args = raw_args.strip()
+                if stripped_args:
+                    try:
+                        loaded = json.loads(stripped_args)
+                    except json.JSONDecodeError:
+                        loaded = {}
+                    args = loaded if isinstance(loaded, dict) else {}
+                else:
+                    args = {}
+            else:
+                args = raw_args if isinstance(raw_args, dict) else {}
             call_id = tool_call.get("id")
             function_call = types.FunctionCall(
-                name=name,
+                name=normalized_name,
                 args=args,
             )
             if isinstance(call_id, str) and call_id:

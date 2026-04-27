@@ -1,0 +1,89 @@
+你真正想做的，可能是这三层
+
+Layer 1: Skill registry
+
+负责：
+	•	管理所有 skill.md
+	•	提供 discovery metadata
+	•	支持 selection
+
+Layer 2: Skill interpreter
+
+负责把 skill 文件变成 runtime 可执行对象，比如：
+	•	steps
+	•	preferred tools
+	•	stop conditions
+	•	output policy
+
+Layer 3: Generic execution engine
+
+负责：
+	•	调 tool
+	•	维护 state
+	•	按 steps 往下走
+	•	把结果反馈回 skill interpreter
+
+
+然后系统自动发现没有用过的skill
+
+用 skill.md 先做 skill library 和 skill selection，再让一个通用 runtime 去解释 skill 的多步执行逻辑。
+
+这个方向不是没有 hard code，
+而是把 hard code 从“每个 workflow”提升成“一个通用 skill runtime”。
+
+这其实是更像你前面一直在讲的真正 skill-native agent system。
+
+如果你愿意，我下一条可以直接帮你画出这个架构：
+
+Skill Library → Skill Router → Skill Interpreter → Tool Runtime → Result
+
+
+Skill Library → Skill Router → Skill Interpreter → Tool Runtime
+
+而 ADK 比较适合拿来承接其中两层：
+	•	Router / Executor agent
+	•	Dynamic workflow runtime
+
+
+User Request
+  -> skill_router_workflow_node
+      -> skill_index_lookup
+      -> router_llm_select_skill
+      -> load_selected_skill_execution_section
+      -> skill_executor_workflow_node
+            -> step loop
+            -> choose tool
+            -> run tool
+            -> inspect result
+            -> continue / fallback / stop
+  -> final answer
+
+  from pathlib import Path
+import yaml
+
+class SkillSpec:
+    def __init__(self, name, description, when_to_use, when_not_to_use,
+                 required_tools, execution_text):
+        self.name = name
+        self.description = description
+        self.when_to_use = when_to_use
+        self.when_not_to_use = when_not_to_use
+        self.required_tools = required_tools
+        self.execution_text = execution_text
+
+def load_skill(path: str) -> SkillSpec:
+    raw = Path(path).read_text(encoding="utf-8")
+    if raw.startswith("---"):
+        _, frontmatter, body = raw.split("---", 2)
+        meta = yaml.safe_load(frontmatter)
+    else:
+        raise ValueError("skill file missing frontmatter")
+
+    return SkillSpec(
+        name=meta["name"],
+        description=meta["description"],
+        when_to_use=meta.get("when_to_use", []),
+        when_not_to_use=meta.get("when_not_to_use", []),
+        required_tools=meta.get("required_tools", []),
+        execution_text=body.strip(),
+    )
