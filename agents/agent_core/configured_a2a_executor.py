@@ -64,10 +64,15 @@ class ConfiguredA2aExecutor(AdkA2aExecutionWrapper):
         builder_kwargs: dict[str, Any] = {}
         if "langfuse_client" in builder_signature.parameters:
             builder_kwargs["langfuse_client"] = self.langfuse_client
-        if "agent_instruction" in builder_signature.parameters:
-            instruction = str(self._config.get("agent_instruction") or "").strip()
-            if instruction:
-                builder_kwargs["agent_instruction"] = instruction
+        for key in ("instruction_prompt_name", "instruction_prompt_label"):
+            if key not in builder_signature.parameters:
+                continue
+            raw_value = self._config.get(key)
+            if not isinstance(raw_value, str):
+                continue
+            value = raw_value.strip()
+            if value:
+                builder_kwargs[key] = value
         agent = builder(**builder_kwargs)
         if not isinstance(agent, BaseAgent):
             raise TypeError(f"{builder_path} must return BaseAgent")
