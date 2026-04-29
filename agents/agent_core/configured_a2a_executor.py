@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from inspect import getfile
-from inspect import signature
 from importlib import import_module
+from inspect import getfile, signature
 from pathlib import Path
 from typing import Any
 
@@ -64,7 +63,7 @@ class ConfiguredA2aExecutor(AdkA2aExecutionWrapper):
         builder_kwargs: dict[str, Any] = {}
         if "langfuse_client" in builder_signature.parameters:
             builder_kwargs["langfuse_client"] = self.langfuse_client
-        for key in ("instruction_prompt_name", "instruction_prompt_label"):
+        for key in ("instruction_prompt_name", "instruction_prompt_label", "fallback_instruction"):
             if key not in builder_signature.parameters:
                 continue
             raw_value = self._config.get(key)

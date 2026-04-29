@@ -81,7 +81,7 @@ class InferenceProviderLlmAdapter(BaseLlm):
         content_parts.extend(function_call_parts)
         if not content_parts:
             content_parts.append(
-                types.Part(text=json.dumps(parsed.model_dump(mode="json"), ensure_ascii=True))
+                types.Part(text=json.dumps(parsed.model_dump(mode="json"), ensure_ascii=False))
             )
         yield LlmResponse(
             content=types.Content(role="model", parts=content_parts),
@@ -221,7 +221,7 @@ class InferenceProviderLlmAdapter(BaseLlm):
             "type": "function_call",
             "call_id": call_id,
             "name": name.strip(),
-            "arguments": json.dumps(arguments, ensure_ascii=True),
+            "arguments": json.dumps(arguments, ensure_ascii=False),
         }
 
     @staticmethod
@@ -250,7 +250,15 @@ class InferenceProviderLlmAdapter(BaseLlm):
                 if not isinstance(item, dict):
                     continue
                 item_type = item.get("type")
-                if isinstance(item_type, str) and item_type.strip():
+                if not isinstance(item_type, str):
+                    continue
+                item_type = item_type.strip()
+                if item_type == "output_text":
+                    normalized_item = dict(item)
+                    normalized_item["type"] = "input_text"
+                    normalized_items.append(normalized_item)
+                    continue
+                if item_type in {"input_text", "input_image", "input_file", "scoped_content"}:
                     normalized_items.append(dict(item))
             if normalized_items:
                 return normalized_items
@@ -258,8 +266,8 @@ class InferenceProviderLlmAdapter(BaseLlm):
         if isinstance(response_payload, str):
             text = response_payload
         else:
-            text = json.dumps(response_payload, ensure_ascii=True)
-        return [{"type": "output_text", "text": text}]
+            text = json.dumps(response_payload, ensure_ascii=False)
+        return [{"type": "input_text", "text": text}]
 
     @staticmethod
     def _openai_tools_from_request(llm_request: LlmRequest) -> list[dict[str, Any]]:

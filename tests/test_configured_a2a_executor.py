@@ -18,10 +18,12 @@ def test_build_agent_from_config_passes_instruction_prompt_overrides(
         langfuse_client=None,
         instruction_prompt_name=None,
         instruction_prompt_label=None,
+        fallback_instruction=None,
     ):
         captured["langfuse_client"] = langfuse_client
         captured["instruction_prompt_name"] = instruction_prompt_name
         captured["instruction_prompt_label"] = instruction_prompt_label
+        captured["fallback_instruction"] = fallback_instruction
         return object()
 
     monkeypatch.setattr(
@@ -37,6 +39,7 @@ def test_build_agent_from_config_passes_instruction_prompt_overrides(
         "adk_agent_builder": "dummy.module.build_agent",
         "instruction_prompt_name": " agents/zep_query_agent/instruction ",
         "instruction_prompt_label": " staging ",
+        "fallback_instruction": " Use Zep tools. ",
     }
 
     ConfiguredA2aExecutor._build_agent_from_config(executor)
@@ -45,6 +48,7 @@ def test_build_agent_from_config_passes_instruction_prompt_overrides(
         "langfuse_client": "lf-client",
         "instruction_prompt_name": "agents/zep_query_agent/instruction",
         "instruction_prompt_label": "staging",
+        "fallback_instruction": "Use Zep tools.",
     }
 
 
@@ -70,6 +74,7 @@ def test_build_agent_from_config_ignores_prompt_overrides_when_not_supported(
         "adk_agent_builder": "dummy.module.build_agent",
         "instruction_prompt_name": "agents/zep_query_agent/instruction",
         "instruction_prompt_label": "production",
+        "fallback_instruction": "Use Zep tools.",
     }
 
     ConfiguredA2aExecutor._build_agent_from_config(executor)

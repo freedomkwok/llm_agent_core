@@ -234,17 +234,17 @@ def test_function_call_output_items_wraps_json_payload_with_typed_item() -> None
     )
     assert output_items == [
         {
-            "type": "output_text",
+            "type": "input_text",
             "text": '{"answer": "ok", "score": 0.8}',
         }
     ]
 
 
-def test_function_call_output_items_keeps_pre_typed_output_items() -> None:
+def test_function_call_output_items_maps_output_text_to_input_text() -> None:
     output_items = InferenceProviderLlmAdapter._function_call_output_items(
         [{"type": "output_text", "text": "already typed"}]
     )
-    assert output_items == [{"type": "output_text", "text": "already typed"}]
+    assert output_items == [{"type": "input_text", "text": "already typed"}]
 
 
 def test_normalized_function_call_arguments_keeps_mapping_payload() -> None:
@@ -306,6 +306,6 @@ def test_common_input_preserves_assistant_function_call_before_tool_output() -> 
         {
             "type": "function_call_output",
             "call_id": "call_123",
-            "output": [{"type": "output_text", "text": '{"count": 1}'}],
+            "output": [{"type": "input_text", "text": '{"count": 1}'}],
         },
     ]

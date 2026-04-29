@@ -40,7 +40,7 @@ def trim_node_fields(raw_node: Any) -> dict[str, Any]:
     node_payload = to_plain_dict(raw_node)
     summary = node_payload.get("summary")
     score = node_payload.get("score")
-    uuid_ = node_payload.get("uuid_")
+    uuid_ = node_payload.get("uuid_") or node_payload.get("uuid")
     return {
         "name": node_payload.get("name"),
         "attributes": node_payload.get("attributes")
@@ -51,7 +51,7 @@ def trim_node_fields(raw_node: Any) -> dict[str, Any]:
         else {},
         "summary": summary if isinstance(summary, str) else "",
         "score": score if isinstance(score, (int, float)) else None,
-        "uuid_": summary if isinstance(uuid_, str) else "",
+        "uuid_": uuid_ if isinstance(uuid_, str) else "",
     }
 
 

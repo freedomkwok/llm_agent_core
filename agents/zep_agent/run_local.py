@@ -19,7 +19,7 @@ async def _main() -> None:
     a2a_agent = build_local_a2a_zep_agent(mode=mode)
     result = await run_local_a2a_orchestration(
         a2a_agent=a2a_agent,
-        message_text="韩立最喜欢谁？on graph mirofish_53c089d117c649c7",
+        message_text="韩立一共得到多少件至宝？on graph mirofish_53c089d117c649c7",
         mode=mode,
         metadata={"graph_id": "mirofish_53c089d117c649c7"},
     )

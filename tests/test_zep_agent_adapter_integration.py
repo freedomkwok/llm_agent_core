@@ -8,8 +8,8 @@ from google.adk.models.llm_request import LlmRequest
 from google.genai import types
 from pydantic import BaseModel
 
+import agents.agent_core.prompt as prompt_module
 from agents.agent_core.inference_provider_llm_adapter import InferenceProviderLlmAdapter
-from agents.zep_agent import a2a_agent_core
 from agents.zep_agent.a2a_agent_core import build_zep_llm_agent
 
 
@@ -46,7 +46,7 @@ def test_build_zep_llm_agent_wires_inference_provider_adapter() -> None:
     assert responses[0].content.parts[0].text == "zep adapter response"
 
 
-def test_resolve_instruction_uses_default_prompt_path_and_yaml_label(
+def test_load_agent_instruction_uses_default_prompt_path_and_yaml_label(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     requested: dict[str, str | None] = {"name": None, "label": None}
@@ -58,17 +58,22 @@ def test_resolve_instruction_uses_default_prompt_path_and_yaml_label(
             return "Instruction from prompt provider."
 
     monkeypatch.setattr(
-        a2a_agent_core,
+        prompt_module,
         "build_default_inference_settings",
         lambda overrides=None: object(),
     )
     monkeypatch.setattr(
-        a2a_agent_core,
+        prompt_module,
         "make_prompt_provider",
         lambda **_: _FakePromptProvider(),
     )
 
-    instruction = a2a_agent_core._resolve_instruction(
+    instruction = prompt_module.load_agent_instruction(
+        agent_name="zep_query_agent",
+        project_name="imp_agent_map.zep_agent",
+        project_metadata={"component": "zep_agent"},
+        settings_overrides={"conversation_store_type": "lru"},
+        fallback_instruction="Fallback instruction.",
         instruction_prompt_name=None,
         instruction_prompt_label="staging",
     )
@@ -80,7 +85,7 @@ def test_resolve_instruction_uses_default_prompt_path_and_yaml_label(
     }
 
 
-def test_resolve_instruction_falls_back_to_default_text_when_fetch_fails(
+def test_load_agent_instruction_falls_back_to_default_text_when_fetch_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class _FailingPromptProvider:
@@ -89,19 +94,22 @@ def test_resolve_instruction_falls_back_to_default_text_when_fetch_fails(
             raise RuntimeError("prompt lookup failed")
 
     monkeypatch.setattr(
-        a2a_agent_core,
+        prompt_module,
         "build_default_inference_settings",
         lambda overrides=None: object(),
     )
     monkeypatch.setattr(
-        a2a_agent_core,
+        prompt_module,
         "make_prompt_provider",
         lambda **_: _FailingPromptProvider(),
     )
 
-    instruction = a2a_agent_core._resolve_instruction(
+    instruction = prompt_module.load_agent_instruction(
+        agent_name="zep_query_agent",
+        project_name="imp_agent_map.zep_agent",
+        fallback_instruction="Fallback instruction.",
         instruction_prompt_name="agents/custom/instruction",
         instruction_prompt_label="production",
     )
 
-    assert instruction == a2a_agent_core._DEFAULT_INSTRUCTION
+    assert instruction == "Fallback instruction."

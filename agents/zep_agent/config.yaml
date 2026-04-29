@@ -33,6 +33,10 @@ executor_config:
   instruction_prompt_name: agents/zep_query_agent/instruction
   # Prompt label used when resolving instruction prompt from Langfuse/file provider.
   instruction_prompt_label: production
+  # Local instruction used if the prompt provider is unavailable or returns empty text.
+  fallback_instruction: >
+    You are a Zep Agent, you are given a user request and you need to use
+    the tools to retrieve information base on use query
   # Langfuse chain observation name for executor runs.
   trace_name: zep_agent_executor
   # Artifact name used when writing task result content.
