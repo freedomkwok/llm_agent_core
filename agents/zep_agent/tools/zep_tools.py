@@ -5,16 +5,18 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
+from zep_cloud.types import SearchFilters
+
 from agents.zep_agent.tools.zep_helper import (
     ZepToolClient,
     extract_items,
     to_plain_dict,
     trim_node_fields,
 )
-from zep_cloud.types import SearchFilters
 
 _RERANKERS = {"rrf", "mmr", "node_distance", "episode_mentions", "cross_encoder"}
 _REQUEST_OPTION_KEYS = {"timeout_in_seconds", "max_retries"}
+_MAX_ZEP_SEARCH_LIMIT = 10
 
 
 @lru_cache(maxsize=1)
@@ -52,6 +54,10 @@ def _zep_request_options(raw_options: dict[str, Any] | None) -> dict[str, Any] |
     return {key: value for key, value in raw_options.items() if key in _REQUEST_OPTION_KEYS}
 
 
+def _zep_search_limit(raw_limit: int) -> int:
+    return min(_MAX_ZEP_SEARCH_LIMIT, max(1, int(raw_limit)))
+
+
 def _graph_result_score(item: dict[str, Any]) -> float:
     score = item.get("score")
     if isinstance(score, bool) or not isinstance(score, (int, float)):
@@ -71,7 +77,9 @@ def _trim_episode_fields(raw_episode: Any) -> dict[str, Any]:
         "source": episode.get("source"),
         "source_description": episode.get("source_description"),
         "score": episode.get("score") if isinstance(episode.get("score"), (int, float)) else None,
-        "relevance": episode.get("relevance") if isinstance(episode.get("relevance"), (int, float)) else None,
+        "relevance": episode.get("relevance")
+        if isinstance(episode.get("relevance"), (int, float))
+        else None,
     }
 
 
@@ -91,6 +99,8 @@ def search_nodes(
     Best for entity discovery when the model needs candidate skills/concepts
     before taking deeper actions. Use search_filters when the request needs
     a specific check instead of broad retrieval.
+
+    Limit: request 1-10 results only; higher values are capped to 10.
 
     Useful filters:
       node_labels: include only nodes with these labels.
@@ -120,7 +130,7 @@ def search_nodes(
 
     Args:
         query: Natural-language search text (semantic + keyword matching).
-        limit: Maximum number of node hits to return (minimum 1).
+        limit: Maximum number of node hits to return. Zep calls are capped to 10.
         graph_id: Target graph ID; falls back to default configured graph when empty.
         search_filters: Optional Zep SearchFilters dict. Examples:
           {"node_labels": ["Person"]}
@@ -142,7 +152,14 @@ def search_nodes(
         {
           "graph_id": str,
           "nodes": [  # sorted by score descending
-            {"uuid_": str, "name": str | None, "attributes": dict, "metadata": dict, "summary": str, "score": float | None}
+            {
+              "uuid_": str,
+              "name": str | None,
+              "attributes": dict,
+              "metadata": dict,
+              "summary": str,
+              "score": float | None,
+            }
           ],
           "count": int
         }
@@ -155,7 +172,7 @@ def search_nodes(
         query=query.strip(),
         graph_id=resolved_graph_id,
         scope="nodes",
-        limit=max(1, limit),
+        limit=_zep_search_limit(limit),
         search_filters=_zep_search_filters(search_filters),
         bfs_origin_node_uuids=bfs_origin_node_uuids,
         center_node_uuid=center_node_uuid.strip() or None,
@@ -189,6 +206,8 @@ def search_edges(
     such as only a certain relationship type, time range, attribute value, or
     source episode metadata.
 
+    Limit: request 1-10 results only; higher values are capped to 10.
+
     Useful filters:
       edge_types: include only these relationship/fact types.
       exclude_edge_types: remove these relationship/fact types.
@@ -219,7 +238,7 @@ def search_edges(
 
     Args:
         query: Natural-language search text.
-        limit: Maximum number of edge hits to return (minimum 1).
+        limit: Maximum number of edge hits to return. Zep calls are capped to 10.
         graph_id: Target graph ID; falls back to default configured graph when empty.
         search_filters: Optional Zep SearchFilters dict. Examples:
           {"edge_types": ["WORKS_AT"]}
@@ -251,7 +270,7 @@ def search_edges(
         query=query.strip(),
         graph_id=resolved_graph_id,
         scope="edges",
-        limit=max(1, limit),
+        limit=_zep_search_limit(limit),
         search_filters=_zep_search_filters(search_filters),
         bfs_origin_node_uuids=bfs_origin_node_uuids,
         center_node_uuid=center_node_uuid.strip() or None,
@@ -283,6 +302,8 @@ def search_episodes(
     Best when the model needs the original memory/source text instead of only
     extracted entities or relationship facts.
 
+    Limit: request 1-10 results only; higher values are capped to 10.
+
     Search tuning priority:
       High: search_filters. Use episode_metadata_filters when the request
         needs source metadata checks.
@@ -301,7 +322,7 @@ def search_episodes(
 
     Args:
         query: Natural-language search text.
-        limit: Maximum number of episode hits to return (minimum 1).
+        limit: Maximum number of episode hits to return. Zep calls are capped to 10.
         graph_id: Target graph ID; falls back to default configured graph when empty.
         search_filters: Optional Zep SearchFilters dict. Example:
           {"episode_metadata_filters": {"type": "and", "filters": [
@@ -331,7 +352,7 @@ def search_episodes(
         query=query.strip(),
         graph_id=resolved_graph_id,
         scope="episodes",
-        limit=max(1, limit),
+        limit=_zep_search_limit(limit),
         search_filters=_zep_search_filters(search_filters),
         bfs_origin_node_uuids=bfs_origin_node_uuids,
         center_node_uuid=center_node_uuid.strip() or None,
@@ -340,7 +361,11 @@ def search_episodes(
         request_options=_zep_request_options(request_options),
     )
     episodes = sorted(
-        [_trim_episode_fields(episode) for episode in (getattr(response, "episodes", None) or []) if episode],
+        [
+            _trim_episode_fields(episode)
+            for episode in (getattr(response, "episodes", None) or [])
+            if episode
+        ],
         key=_graph_result_score,
         reverse=True,
     )
@@ -368,7 +393,11 @@ def get_edges_for_node(node_uuid: str) -> dict[str, Any]:
         return {"node_uuid": normalized_uuid, "edges": [], "count": 0}
     response = client.client.graph.node.get_edges(node_uuid=normalized_uuid)
     edges = sorted(
-        [to_plain_dict(edge) for edge in extract_items(response, preferred_keys=("edges",)) if edge],
+        [
+            to_plain_dict(edge)
+            for edge in extract_items(response, preferred_keys=("edges",))
+            if edge
+        ],
         key=_graph_result_score,
         reverse=True,
     )
@@ -402,16 +431,23 @@ def get_node_by_id(node_uuid: str) -> dict[str, Any]:
     return {"node_uuid": normalized_uuid, "node": trim_node_fields(node)}
 
 
-def search_around_node(node_uuid: str, query: str = "", limit: int = 10, graph_id: str = "") -> dict[str, Any]:
+def search_around_node(
+    node_uuid: str,
+    query: str = "",
+    limit: int = 10,
+    graph_id: str = "",
+) -> dict[str, Any]:
     """Build a neighborhood context bundle around a node.
 
     Combines direct node lookup, connected edges, and related node/edge search
     into one response for routing/reasoning steps.
 
+    Limit: request 1-10 related results only; higher values are capped to 10.
+
     Args:
         node_uuid: Anchor node UUID.
         query: Optional override query for related search. If empty, uses node-derived text.
-        limit: Maximum results for related node/edge searches.
+        limit: Maximum results for related node/edge searches. Zep calls are capped to 10.
         graph_id: Target graph ID for related searches.
 
     Returns:

@@ -10,8 +10,8 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from agents.agent_core import OrchestrationMode, run_local_a2a_orchestration
-from agents.zep_agent.registry import build_local_a2a_zep_agent
+from agents.agent_core.a2a import OrchestrationMode, run_local_a2a_orchestration  # noqa: E402
+from agents.zep_agent.registry import build_local_a2a_zep_agent  # noqa: E402
 
 
 async def _main() -> None:
@@ -20,7 +20,6 @@ async def _main() -> None:
     result = await run_local_a2a_orchestration(
         a2a_agent=a2a_agent,
         message_text="韩立一共得到多少件至宝？on graph mirofish_53c089d117c649c7",
-        mode=mode,
         metadata={"graph_id": "mirofish_53c089d117c649c7"},
     )
     print("task_id:", result.task_id)

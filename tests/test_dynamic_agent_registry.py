@@ -2,8 +2,8 @@ import asyncio
 from typing import Any
 
 from agents.agent_core import DynamicAgentRegistry, HostOrchestrator, OrchestrationMode
-from agents.agent_core.agent_descriptor import normalize_skill_descriptors
-from agents.agent_core.agent_resolver import AgentResolver
+from agents.agent_core.routing.descriptor import normalize_skill_descriptors
+from agents.agent_core.routing.resolver import AgentResolver
 from agents.planning_agent.registry import register_local_planning_agent
 
 

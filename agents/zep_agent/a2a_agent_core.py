@@ -7,8 +7,7 @@ from typing import Any
 
 from google.adk.agents.llm_agent import LlmAgent
 
-from agents.agent_core.inference_provider_llm_adapter import InferenceProviderLlmAdapter
-from agents.agent_core.prompt import load_agent_instruction
+from agents.agent_core.inference import InferenceProviderLlmAdapter, load_agent_instruction
 from agents.zep_agent._env import bootstrap_env
 from agents.zep_agent.tools import (
     get_edges_for_node,

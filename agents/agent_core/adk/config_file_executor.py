@@ -11,7 +11,7 @@ import yaml
 from google.adk.agents.base_agent import BaseAgent
 from langfuse import get_client
 
-from agents.agent_core.adk_a2a_execution_wrapper import AdkA2aExecutionWrapper
+from agents.agent_core.adk.a2a_executor import AdkA2aExecutionWrapper
 
 
 class ConfiguredA2aExecutor(AdkA2aExecutionWrapper):

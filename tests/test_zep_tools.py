@@ -105,7 +105,9 @@ class _FakeClient:
         return (explicit_graph_id or "graph-1").strip()
 
 
-def test_search_nodes_and_get_node_by_id_trim_heavy_node_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_search_nodes_and_get_node_by_id_trim_heavy_node_fields(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(zep_tools, "_client", lambda: _FakeClient())
 
     search_result = zep_tools.search_nodes(query="alpha", graph_id="graph-1", limit=2)
@@ -133,7 +135,9 @@ def test_search_nodes_and_get_node_by_id_trim_heavy_node_fields(monkeypatch: pyt
     assert "embedding" not in node_result["node"]
 
 
-def test_search_episodes_uses_episode_scope_and_sorts_by_score(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_search_episodes_uses_episode_scope_and_sorts_by_score(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     fake_client = _FakeClient()
     monkeypatch.setattr(zep_tools, "_client", lambda: fake_client)
 
@@ -152,4 +156,17 @@ def test_search_episodes_uses_episode_scope_and_sorts_by_score(monkeypatch: pyte
     assert search_result["episodes"][1]["uuid_"] == "episode-2"
     assert fake_client.client.graph.search_calls[-1]["scope"] == "episodes"
     assert fake_client.client.graph.search_calls[-1]["bfs_origin_node_uuids"] == ["node-1"]
-    assert fake_client.client.graph.search_calls[-1]["request_options"] == {"timeout_in_seconds": 30}
+    assert fake_client.client.graph.search_calls[-1]["request_options"] == {
+        "timeout_in_seconds": 30
+    }
+
+
+def test_search_limit_is_capped_to_zep_maximum(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_client = _FakeClient()
+    monkeypatch.setattr(zep_tools, "_client", lambda: fake_client)
+
+    zep_tools.search_nodes(query="alpha", graph_id="graph-1", limit=100)
+    zep_tools.search_edges(query="alpha", graph_id="graph-1", limit=0)
+
+    assert fake_client.client.graph.search_calls[-2]["limit"] == 10
+    assert fake_client.client.graph.search_calls[-1]["limit"] == 1

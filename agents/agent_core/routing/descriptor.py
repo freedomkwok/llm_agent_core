@@ -2,19 +2,20 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Callable, Iterable, Mapping
+from enum import StrEnum
+from typing import Any
 
 
-class AgentBackendType(str, Enum):
+class AgentBackendType(StrEnum):
     """Supported backend implementations for an agent capability endpoint."""
 
     LOCAL_A2A = "local_a2a"
     REMOTE_A2A = "remote_a2a"
 
 
-class AgentHealthStatus(str, Enum):
+class AgentHealthStatus(StrEnum):
     """Best-effort availability status for an agent endpoint."""
 
     UNKNOWN = "unknown"
@@ -36,8 +37,7 @@ class SkillDescriptor:
 
 @dataclass(frozen=True)
 class AgentDescriptor:
-    """Normalized runtime description of one resolvable agent endpoint.
-       “one resolvable agent endpoint” and can carry a cached_agent_card for that same endpoint."""
+    """Normalized runtime description of one resolvable agent endpoint."""
 
     agent_id: str
     agent_name: str
@@ -105,7 +105,10 @@ def normalize_skill_descriptors(raw_skills: Iterable[Any] | None) -> tuple[Skill
     return tuple(normalized)
 
 
-def aggregate_tags(skills: Iterable[SkillDescriptor], tags: Iterable[str] | None = None) -> tuple[str, ...]:
+def aggregate_tags(
+    skills: Iterable[SkillDescriptor],
+    tags: Iterable[str] | None = None,
+) -> tuple[str, ...]:
     """Merge descriptor-level and skill-level tags into a stable tuple."""
     merged: list[str] = []
     seen: set[str] = set()

@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable, Mapping
+from collections.abc import Iterable, Mapping
+from typing import Any
 
-from agents.agent_core.agent_descriptor import (
+from agents.agent_core.routing.descriptor import (
     AgentBackendType,
     AgentDescriptor,
     AgentHealthStatus,
     SkillDescriptor,
     aggregate_tags,
 )
-from agents.agent_core.agent_handle import BaseAgentHandle, build_agent_handle
+from agents.agent_core.routing.handle import BaseAgentHandle, build_agent_handle
 
 
 class DynamicAgentRegistry:
@@ -138,7 +139,10 @@ class DynamicAgentRegistry:
             if normalized_name and normalized_name not in descriptor.agent_name.lower():
                 continue
             if required_metadata:
-                if any(descriptor.metadata.get(key) != value for key, value in required_metadata.items()):
+                if any(
+                    descriptor.metadata.get(key) != value
+                    for key, value in required_metadata.items()
+                ):
                     continue
             results.append(descriptor)
         return results

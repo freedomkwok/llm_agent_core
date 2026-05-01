@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable, Mapping
+from collections.abc import Iterable, Mapping
+from typing import Any
 
-from agents.agent_core.a2a_orchestration import OrchestrationMode
-from agents.agent_core.agent_handle import AgentInvocationResult
-from agents.agent_core.agent_registry import DynamicAgentRegistry
-from agents.agent_core.agent_resolver import AgentResolver
+from agents.agent_core.a2a.local_orchestration import OrchestrationMode
+from agents.agent_core.routing.handle import AgentInvocationResult
+from agents.agent_core.routing.registry import DynamicAgentRegistry
+from agents.agent_core.routing.resolver import AgentResolver
 
 
 class HostOrchestrator:

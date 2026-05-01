@@ -7,7 +7,7 @@ from typing import Any
 
 from llm_inference_core import ProjectContext, make_prompt_provider
 
-from agents.agent_core.inference_provider import build_default_inference_settings
+from agents.agent_core.inference.settings import build_default_inference_settings
 
 
 def default_instruction_prompt_name(agent_name: str) -> str:
@@ -50,3 +50,5 @@ def load_agent_instruction(
         if instruction:
             return instruction
     return fallback_instruction
+
+__all__ = ["default_instruction_prompt_name", "load_agent_instruction"]

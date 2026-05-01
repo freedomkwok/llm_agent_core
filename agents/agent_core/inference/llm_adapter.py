@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
-from enum import Enum
 import re
-from typing import Any, AsyncGenerator, Mapping
+from collections.abc import AsyncGenerator, Mapping
+from enum import Enum
+from typing import Any
 
 from google.adk.models.base_llm import BaseLlm
 from google.adk.models.llm_request import LlmRequest
@@ -13,8 +14,7 @@ from google.adk.models.llm_response import LlmResponse
 from google.genai import types
 from pydantic import BaseModel, Field
 
-from agents.agent_core.inference_provider import create_inference_provider
-from llm_inference_core.providers import InferenceProvider
+from agents.agent_core.inference.settings import create_inference_provider
 
 _MODEL_PARAM_NAMES = (
     "temperature",
@@ -39,13 +39,13 @@ class InferenceProviderLlmAdapter(BaseLlm):
     """Expose InferenceProvider through ADK BaseLlm interface."""
 
     model: str = "gpt-4.1-mini"
-    provider: InferenceProvider | None = Field(default=None, exclude=True, repr=False)
+    provider: Any | None = Field(default=None, exclude=True, repr=False)
     langfuse_client: Any = Field(default=None, exclude=True, repr=False)
     project_name: str = "imp_agent_map.zep_agent"
     project_metadata: Mapping[str, Any] = Field(default_factory=dict)
     settings_overrides: Mapping[str, Any] = Field(default_factory=dict)
 
-    def _ensure_provider(self) -> InferenceProvider:
+    def _ensure_provider(self) -> Any:
         if self.provider is not None:
             return self.provider
         self.provider = create_inference_provider(

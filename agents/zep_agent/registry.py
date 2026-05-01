@@ -2,14 +2,23 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any
 
 from vertexai.preview.reasoning_engines import A2aAgent
 
-from agents.agent_core import ConfiguredA2aExecutor, OrchestrationMode, build_agent_card_from_yaml
-from agents.agent_core.agent_descriptor import AgentDescriptor, build_local_descriptor_from_agent_card
-from agents.agent_core.agent_registry import DynamicAgentRegistry
+from agents.agent_core.a2a import (
+    OrchestrationMode,
+    build_agent_card_from_yaml,
+    set_local_a2a_orchestration_mode,
+)
+from agents.agent_core.adk import ConfiguredA2aExecutor
+from agents.agent_core.routing import (
+    AgentDescriptor,
+    DynamicAgentRegistry,
+    build_local_descriptor_from_agent_card,
+)
 from agents.zep_agent._env import bootstrap_env
 
 bootstrap_env()
@@ -22,13 +31,13 @@ def build_local_a2a_zep_agent(
     mode: OrchestrationMode = OrchestrationMode.AGENT_INTERNAL,
 ) -> A2aAgent:
     """Build local A2A zep agent from shared config-driven executor."""
-    del mode
     agent = A2aAgent(
         agent_card=agent_card,
         agent_executor_builder=lambda: ConfiguredA2aExecutor(
             config_path=config_path, config_section="executor_config"
         ),
     )
+    set_local_a2a_orchestration_mode(agent, mode)
     agent.set_up()
     return agent
 

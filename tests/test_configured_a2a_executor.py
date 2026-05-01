@@ -4,8 +4,8 @@ import pytest
 
 pytest.importorskip("google.adk")
 
-import agents.agent_core.configured_a2a_executor as configured_executor_module
-from agents.agent_core.configured_a2a_executor import ConfiguredA2aExecutor
+import agents.agent_core.adk.config_file_executor as configured_executor_module
+from agents.agent_core.adk.config_file_executor import ConfiguredA2aExecutor
 
 
 def test_build_agent_from_config_passes_instruction_prompt_overrides(

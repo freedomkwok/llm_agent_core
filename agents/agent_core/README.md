@@ -33,7 +33,7 @@ The core design separates five responsibilities:
 
 ## File overview
 
-### `agent_descriptor.py`
+### `routing/descriptor.py`
 
 Defines normalized runtime models:
 
@@ -64,7 +64,7 @@ Key point:
 `AgentDescriptor` describes **how to resolve/use** an agent.  
 It does **not** execute the agent itself.
 
-### `agent_handle.py`
+### `routing/handle.py`
 
 Defines the unified invocation interface:
 
@@ -87,7 +87,7 @@ This wraps a local builder-backed A2A agent.
 It:
 
 - lazily builds the in-process A2A agent from `descriptor.local_builder`
-- uses the local A2A helper functions from `a2a_orchestration.py`
+- uses the local A2A helper functions from `a2a/local_orchestration.py`
 - returns a normalized `AgentInvocationResult`
 
 #### `RemoteA2AHandle`
@@ -101,7 +101,7 @@ Right now:
 
 This keeps the architecture ready for remote transport without forcing full HTTP implementation yet.
 
-### `agent_registry.py`
+### `routing/registry.py`
 
 Defines `DynamicAgentRegistry`.
 
@@ -123,7 +123,7 @@ Important:
 This is **not** a hardcoded module-level dict.  
 It is an object you create at runtime and populate explicitly.
 
-### `agent_resolver.py`
+### `routing/resolver.py`
 
 Defines `AgentResolver`.
 
@@ -146,7 +146,7 @@ Future expansion:
 - weighted ranking
 - policy-based selection
 
-### `host_orchestrator.py`
+### `routing/orchestrator.py`
 
 Defines `HostOrchestrator`.
 
@@ -167,7 +167,7 @@ Responsibilities:
 
 ## Local A2A support
 
-### `a2a_orchestration.py`
+### `a2a/local_orchestration.py`
 
 This file contains reusable local A2A invocation helpers.
 
@@ -196,7 +196,7 @@ This file is about **local transport flow**, not capability routing.
 
 ## ADK-backed execution support
 
-### `adk_a2a_execution_wrapper.py`
+### `adk/a2a_executor.py`
 
 Defines `AdkA2aExecutionWrapper`.
 

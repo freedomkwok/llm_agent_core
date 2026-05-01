@@ -8,8 +8,8 @@ from google.adk.models.llm_request import LlmRequest
 from google.genai import types
 from pydantic import BaseModel
 
-import agents.agent_core.prompt as prompt_module
-from agents.agent_core.inference_provider_llm_adapter import InferenceProviderLlmAdapter
+import agents.agent_core.inference.prompt as prompt_module
+from agents.agent_core.inference.llm_adapter import InferenceProviderLlmAdapter
 from agents.zep_agent.a2a_agent_core import build_zep_llm_agent
 
 

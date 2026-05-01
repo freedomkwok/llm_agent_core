@@ -8,7 +8,7 @@ from google.adk.models.llm_request import LlmRequest
 from google.genai import types
 from pydantic import BaseModel
 
-from agents.agent_core.inference_provider_llm_adapter import InferenceProviderLlmAdapter
+from agents.agent_core.inference.llm_adapter import InferenceProviderLlmAdapter
 
 
 class FakeInferResult(BaseModel):
@@ -46,7 +46,12 @@ def _request_with_text(*, user_text: str, system_prompt: str | None = None) -> L
     return request
 
 
-def _run_collect(adapter: InferenceProviderLlmAdapter, request: LlmRequest, *, stream: bool) -> list:
+def _run_collect(
+    adapter: InferenceProviderLlmAdapter,
+    request: LlmRequest,
+    *,
+    stream: bool,
+) -> list:
     async def run():
         responses = []
         async for response in adapter.generate_content_async(request, stream=stream):
@@ -147,7 +152,11 @@ def test_adapter_skips_malformed_tool_calls_and_normalizes_string_arguments() ->
                 text="",
                 tool_calls=[
                     {"id": "call_invalid_blank", "name": "   ", "arguments": {"query": "ignore"}},
-                    {"id": "call_invalid_chars", "name": "bad name!", "arguments": {"query": "ignore"}},
+                    {
+                        "id": "call_invalid_chars",
+                        "name": "bad name!",
+                        "arguments": {"query": "ignore"},
+                    },
                     {"id": "call_123", "name": "search_nodes", "arguments": '{"query":"payments"}'},
                 ],
             )

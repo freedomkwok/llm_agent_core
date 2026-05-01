@@ -3,27 +3,31 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
-from enum import Enum
 import json
+import logging
 import time
-from typing import Any, Mapping
+from collections.abc import Mapping
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import Any
 from uuid import uuid4
 
 from starlette.requests import Request
 from vertexai.preview.reasoning_engines import A2aAgent
-import logging
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s - %(message)s",
 )
 
-class OrchestrationMode(str, Enum):
+class OrchestrationMode(StrEnum):
     """High-level orchestration mode for local A2A calls."""
 
     HOST_DRIVEN = "host_driven"
     AGENT_INTERNAL = "agent_internal"
+
+
+_ORCHESTRATION_MODE_ATTR = "_agent_core_orchestration_mode"
 
 
 @dataclass
@@ -37,6 +41,28 @@ class A2AFlowResult:
     task_id: str | None = None
     task_status: str | None = None
     final_text: str | None = None
+
+
+def set_local_a2a_orchestration_mode(
+    a2a_agent: A2aAgent,
+    mode: OrchestrationMode,
+) -> A2aAgent:
+    setattr(a2a_agent, _ORCHESTRATION_MODE_ATTR, OrchestrationMode(mode))
+    return a2a_agent
+
+
+def local_a2a_orchestration_mode(
+    a2a_agent: A2aAgent,
+    *,
+    default: OrchestrationMode = OrchestrationMode.HOST_DRIVEN,
+) -> OrchestrationMode:
+    raw_mode = getattr(a2a_agent, _ORCHESTRATION_MODE_ATTR, None)
+    if raw_mode is None:
+        return default
+    try:
+        return OrchestrationMode(raw_mode)
+    except ValueError:
+        return default
 
 
 # Align with a2a TaskState terminal set used by DefaultRequestHandler.
@@ -178,7 +204,7 @@ async def run_local_a2a_orchestration(
     *,
     a2a_agent: A2aAgent,
     message_text: str,
-    mode: OrchestrationMode,
+    mode: OrchestrationMode | None = None,
     metadata: Mapping[str, Any] | None = None,
     context: Any = None,
     include_authenticated_card: bool | None = None,
@@ -187,15 +213,16 @@ async def run_local_a2a_orchestration(
     task_poll_interval_sec: float = 5.0,
 ) -> A2AFlowResult:
     """Run local A2A flow in host-driven or agent-internal mode."""
+    resolved_mode = mode or local_a2a_orchestration_mode(a2a_agent)
     include_card = (
         include_authenticated_card
         if include_authenticated_card is not None
-        else mode == OrchestrationMode.HOST_DRIVEN
+        else resolved_mode == OrchestrationMode.HOST_DRIVEN
     )
     fetch_task = (
         fetch_task_response
         if fetch_task_response is not None
-        else mode == OrchestrationMode.HOST_DRIVEN
+        else resolved_mode == OrchestrationMode.HOST_DRIVEN
     )
 
     card_response = None
@@ -230,11 +257,10 @@ async def run_local_a2a_orchestration(
                     f"A2A task {task_id!r} did not reach a terminal state within "
                     f"{task_poll_timeout_sec}s (last status: {status!r})"
                 )
-            # logging.info(f"A2A task {task_id!r} time: {task_poll_timeout_sec}s / {deadline} (last status: {status!r})")
             await asyncio.sleep(task_poll_interval_sec)
 
     return A2AFlowResult(
-        mode=mode,
+        mode=resolved_mode,
         card_response=card_response,
         send_response=send_response,
         task_response=task_response,
