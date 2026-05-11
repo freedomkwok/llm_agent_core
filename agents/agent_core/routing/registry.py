@@ -9,14 +9,14 @@ from inspect import signature
 from pkgutil import iter_modules
 from typing import Any
 
-from agents.agent_core.routing.descriptor import (
+from imp_agent_core.agents.agent_core.routing.descriptor import (
     AgentBackendType,
     AgentDescriptor,
     AgentHealthStatus,
     SkillDescriptor,
     aggregate_tags,
 )
-from agents.agent_core.routing.handle import BaseAgentHandle, build_agent_handle
+from imp_agent_core.agents.agent_core.routing.handle import BaseAgentHandle, build_agent_handle
 
 
 class DynamicAgentRegistry:

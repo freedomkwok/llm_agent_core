@@ -3,14 +3,15 @@ import asyncio
 import sys
 from typing import Any
 
-from agents.agent_core import (
+from imp_agent_core.agents.agent_core.routing.descriptor import normalize_skill_descriptors
+from imp_agent_core.agents.agent_core.routing.resolver import AgentResolver
+
+from imp_agent_core.agents.agent_core import (
     DynamicAgentRegistry,
     HostOrchestrator,
     OrchestrationMode,
     register_agent_package,
 )
-from agents.agent_core.routing.descriptor import normalize_skill_descriptors
-from agents.agent_core.routing.resolver import AgentResolver
 
 
 class FakeLocalPlanningA2AAgent:
@@ -98,7 +99,7 @@ def test_register_agent_package_calls_worker_registrars(tmp_path, monkeypatch) -
     (agent_dir / "__init__.py").write_text("", encoding="utf-8")
     (agent_dir / "registry.py").write_text(
         """
-from agents.agent_core.routing.descriptor import normalize_skill_descriptors
+from imp_agent_core.agents.agent_core.routing.descriptor import normalize_skill_descriptors
 
 
 def register_worker_agent(registry, *, replace=True):
@@ -134,7 +135,7 @@ def test_register_agent_package_includes_zep_agent_by_default(tmp_path, monkeypa
     (zep_dir / "__init__.py").write_text("", encoding="utf-8")
     (zep_dir / "registry.py").write_text(
         """
-from agents.agent_core.routing.descriptor import normalize_skill_descriptors
+from imp_agent_core.agents.agent_core.routing.descriptor import normalize_skill_descriptors
 
 
 def register_zep_worker_agent(registry, *, replace=True):

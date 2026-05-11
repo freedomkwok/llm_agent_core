@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Compatibility namespace for ``agents.agent_core.a2a``."""
+"""Compatibility namespace for ``imp_agent_core.agents.agent_core.a2a``."""
 
-from agents.agent_core.a2a import *  # noqa: F403
+from imp_agent_core.agents.agent_core.a2a import *  # noqa: F403
 

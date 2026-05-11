@@ -9,7 +9,7 @@ from google.adk.models.llm_request import LlmRequest
 from google.genai import types
 from pydantic import BaseModel
 
-from agents.agent_core.inference.llm_adapter import InferenceProviderLlmAdapter
+from imp_agent_core.agents.agent_core.inference.llm_adapter import InferenceProviderLlmAdapter
 
 
 class FakeInferResult(BaseModel):

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tool exports for zep_agent."""
 
-from agents.zep_agent.tools.zep_tools import (
+from imp_agent_core.agents.zep_agent.tools.zep_tools import (
     get_edges_for_node,
     get_node_by_id,
     search_around_node,

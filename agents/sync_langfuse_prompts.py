@@ -9,9 +9,8 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from imp_agent_core.agents.zep_agent._env import bootstrap_env
 from langfuse import get_client
-
-from agents.zep_agent._env import bootstrap_env
 
 _AGENTS_DIR = Path(__file__).resolve().parent
 _DEFAULT_AGENT = "zep_agent"

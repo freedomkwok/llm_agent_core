@@ -5,10 +5,10 @@ import asyncio
 from types import SimpleNamespace
 from typing import Any
 
-from agents.agent_core import DynamicAgentRegistry, OrchestrationMode
-from agents.agent_core.adk.executor import AdkA2aExecutor
-from agents.agent_core.routing.descriptor import normalize_skill_descriptors
-from agents.agent_core.sub_agent_invoke import (
+from imp_agent_core.agents.agent_core import DynamicAgentRegistry, OrchestrationMode
+from imp_agent_core.agents.agent_core.adk.executor import AdkA2aExecutor
+from imp_agent_core.agents.agent_core.routing.descriptor import normalize_skill_descriptors
+from imp_agent_core.agents.agent_core.sub_agent_invoke import (
     SubAgentInvocationPolicy,
     SubAgentInvoker,
     SubAgentToolConfig,

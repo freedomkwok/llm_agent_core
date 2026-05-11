@@ -8,11 +8,10 @@ from dataclasses import dataclass
 from typing import Any
 
 from google.adk.tools.tool_context import ToolContext
-
-from agents.agent_core.routing import AgentResolver
-from agents.agent_core.routing.registry import DynamicAgentRegistry
-from agents.agent_core.sub_agent_invoke.invoker import SubAgentInvoker
-from agents.agent_core.sub_agent_invoke.policy import SubAgentInvocationPolicy
+from imp_agent_core.agents.agent_core.routing import AgentResolver
+from imp_agent_core.agents.agent_core.routing.registry import DynamicAgentRegistry
+from imp_agent_core.agents.agent_core.sub_agent_invoke.invoker import SubAgentInvoker
+from imp_agent_core.agents.agent_core.sub_agent_invoke.policy import SubAgentInvocationPolicy
 
 DEFAULT_SUB_AGENT_TOOL_INSTRUCTION = (
     "\n\nWhen a request contains a narrow sub-question that should be delegated to "

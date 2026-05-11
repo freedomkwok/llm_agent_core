@@ -1,7 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from agents.sync_langfuse_prompts import agent_prompt_specs, sync_prompts, zep_prompt_specs
+from imp_agent_core.agents.sync_langfuse_prompts import (
+    agent_prompt_specs,
+    sync_prompts,
+    zep_prompt_specs,
+)
 
 
 class FakeLangfuseClient:

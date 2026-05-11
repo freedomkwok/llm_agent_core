@@ -6,7 +6,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
-from agents.zep_agent.tools.zep_helper import (
+from imp_agent_core.agents.zep_agent.tools.zep_helper import (
     ZepToolClient,
     extract_items,
     to_plain_dict,

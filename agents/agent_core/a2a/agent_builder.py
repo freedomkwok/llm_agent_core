@@ -6,8 +6,8 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Any
 
-from agents.agent_core.a2a.local_agent import LocalA2aAgent
-from agents.agent_core.a2a.runtime import A2aRuntime, configured_a2a_runtime
+from imp_agent_core.agents.agent_core.a2a.local_agent import LocalA2aAgent
+from imp_agent_core.agents.agent_core.a2a.runtime import A2aRuntime, configured_a2a_runtime
 
 
 def build_local_a2a_agent(

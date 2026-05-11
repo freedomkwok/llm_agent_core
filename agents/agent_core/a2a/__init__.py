@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 """A2A transport and card helpers."""
 
-from agents.agent_core.a2a.agent_builder import build_local_a2a_agent
-from agents.agent_core.a2a.agent_card_yaml import build_agent_card_from_yaml
-from agents.agent_core.a2a.local_agent import LocalA2aAgent
-from agents.agent_core.a2a.local_orchestration import (
+from imp_agent_core.agents.agent_core.a2a.agent_builder import build_local_a2a_agent
+from imp_agent_core.agents.agent_core.a2a.agent_card_yaml import build_agent_card_from_yaml
+from imp_agent_core.agents.agent_core.a2a.local_agent import LocalA2aAgent
+from imp_agent_core.agents.agent_core.a2a.local_orchestration import (
     A2AFlowResult,
     OrchestrationMode,
     build_get_task_request,
@@ -15,7 +15,7 @@ from agents.agent_core.a2a.local_orchestration import (
     run_local_a2a_orchestration,
     set_local_a2a_orchestration_mode,
 )
-from agents.agent_core.a2a.runtime import (
+from imp_agent_core.agents.agent_core.a2a.runtime import (
     A2A_RUNTIME_ENV,
     A2aRuntime,
     configured_a2a_runtime,

@@ -7,11 +7,12 @@ import os
 from typing import Any
 
 from google.adk.agents.llm_agent import LlmAgent
-
-from agents.agent_core import SubAgentToolConfig
-from agents.agent_core.inference import InferenceProviderLlmAdapter, load_agent_instruction
-from agents.zep_agent._env import bootstrap_env
-from agents.zep_agent.tools import (
+from imp_agent_core.agents.agent_core.inference import (
+    InferenceProviderLlmAdapter,
+    load_agent_instruction,
+)
+from imp_agent_core.agents.zep_agent._env import bootstrap_env
+from imp_agent_core.agents.zep_agent.tools import (
     get_edges_for_node,
     get_node_by_id,
     search_around_node,
@@ -19,6 +20,8 @@ from agents.zep_agent.tools import (
     search_episodes,
     search_nodes,
 )
+
+from imp_agent_core.agents.agent_core import SubAgentToolConfig
 
 bootstrap_env()
 

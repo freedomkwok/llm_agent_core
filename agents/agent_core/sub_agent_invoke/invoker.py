@@ -7,11 +7,14 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 from google.adk.tools.tool_context import ToolContext
-
-from agents.agent_core.a2a.local_orchestration import OrchestrationMode
-from agents.agent_core.routing import AgentBackendType, AgentDescriptor, AgentResolver
-from agents.agent_core.routing.registry import DynamicAgentRegistry
-from agents.agent_core.sub_agent_invoke.policy import (
+from imp_agent_core.agents.agent_core.a2a.local_orchestration import OrchestrationMode
+from imp_agent_core.agents.agent_core.routing import (
+    AgentBackendType,
+    AgentDescriptor,
+    AgentResolver,
+)
+from imp_agent_core.agents.agent_core.routing.registry import DynamicAgentRegistry
+from imp_agent_core.agents.agent_core.sub_agent_invoke.policy import (
     DEPTH_STATE_KEY,
     SubAgentInvocationPolicy,
 )

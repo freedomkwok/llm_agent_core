@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
-from agents.agent_core import DynamicAgentRegistry, reset_global_agent_registry
-from agents.zep_agent.registry import register_local_zep_agent, register_zep_worker_agent
+from imp_agent_core.agents.agent_core import DynamicAgentRegistry, reset_global_agent_registry
+from imp_agent_core.agents.zep_agent.registry import register_local_zep_agent, register_zep_worker_agent
 
 
 class FakeLocalZepA2AAgent:

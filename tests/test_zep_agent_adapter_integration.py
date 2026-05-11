@@ -5,17 +5,17 @@ import pytest
 
 pytest.importorskip("google.adk")
 
+import imp_agent_core.agents.agent_core.inference.prompt as prompt_module
+import imp_agent_core.agents.zep_agent.a2a_agent_core as zep_agent_core
 from google.adk.models.llm_request import LlmRequest
 from google.genai import types
+from imp_agent_core.agents.agent_core.adk.executor import ConfiguredA2aExecutor
+from imp_agent_core.agents.agent_core.inference.llm_adapter import InferenceProviderLlmAdapter
+from imp_agent_core.agents.zep_agent.a2a_agent_core import build_zep_llm_agent
+from imp_agent_core.agents.zep_agent.registry import config_path
 from pydantic import BaseModel
 
-import agents.agent_core.inference.prompt as prompt_module
-import agents.zep_agent.a2a_agent_core as zep_agent_core
-from agents.agent_core import DynamicAgentRegistry, SubAgentToolConfig
-from agents.agent_core.adk.executor import ConfiguredA2aExecutor
-from agents.agent_core.inference.llm_adapter import InferenceProviderLlmAdapter
-from agents.zep_agent.a2a_agent_core import build_zep_llm_agent
-from agents.zep_agent.registry import config_path
+from imp_agent_core.agents.agent_core import DynamicAgentRegistry, SubAgentToolConfig
 
 
 class _FakeZepResult(BaseModel):

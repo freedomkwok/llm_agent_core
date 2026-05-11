@@ -5,13 +5,13 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 
-from agents.agent_core.routing.descriptor import (
+from imp_agent_core.agents.agent_core.routing.descriptor import (
     AgentBackendType,
     AgentDescriptor,
     AgentHealthStatus,
 )
-from agents.agent_core.routing.handle import BaseAgentHandle
-from agents.agent_core.routing.registry import DynamicAgentRegistry
+from imp_agent_core.agents.agent_core.routing.handle import BaseAgentHandle
+from imp_agent_core.agents.agent_core.routing.registry import DynamicAgentRegistry
 
 
 class AgentResolver:

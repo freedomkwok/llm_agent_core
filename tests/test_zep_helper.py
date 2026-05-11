@@ -2,7 +2,7 @@
 import asyncio
 from types import SimpleNamespace
 
-from agents.skill_route_agent.utils.zep_helper import (
+from imp_agent_core.agents.skill_route_agent.utils.zep_helper import (
     ZepQueryRequest,
     ZepSkillSearchComponent,
     fetch_edges_by_node_uuids,

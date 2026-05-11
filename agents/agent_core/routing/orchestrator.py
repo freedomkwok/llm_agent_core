@@ -6,10 +6,10 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import Any
 
-from agents.agent_core.a2a.local_orchestration import OrchestrationMode
-from agents.agent_core.routing.handle import AgentInvocationResult
-from agents.agent_core.routing.registry import DynamicAgentRegistry
-from agents.agent_core.routing.resolver import AgentResolver
+from imp_agent_core.agents.agent_core.a2a.local_orchestration import OrchestrationMode
+from imp_agent_core.agents.agent_core.routing.handle import AgentInvocationResult
+from imp_agent_core.agents.agent_core.routing.registry import DynamicAgentRegistry
+from imp_agent_core.agents.agent_core.routing.resolver import AgentResolver
 
 
 class HostOrchestrator:

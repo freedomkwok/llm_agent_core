@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from agents.agent_core.a2a.local_orchestration import (
+from imp_agent_core.agents.agent_core.a2a.local_orchestration import (
     A2AFlowResult,
     OrchestrationMode,
     build_get_task_request,
@@ -17,7 +17,7 @@ from agents.agent_core.a2a.local_orchestration import (
     extract_task_id,
     run_local_a2a_orchestration,
 )
-from agents.agent_core.routing.descriptor import AgentBackendType, AgentDescriptor
+from imp_agent_core.agents.agent_core.routing.descriptor import AgentBackendType, AgentDescriptor
 
 
 @dataclass

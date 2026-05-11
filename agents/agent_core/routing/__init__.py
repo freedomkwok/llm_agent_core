@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Agent catalog, registry, and capability routing helpers."""
 
-from agents.agent_core.routing.descriptor import (
+from imp_agent_core.agents.agent_core.routing.descriptor import (
     AgentBackendType,
     AgentDescriptor,
     AgentHealthStatus,
@@ -10,21 +10,21 @@ from agents.agent_core.routing.descriptor import (
     build_local_descriptor_from_agent_card,
     normalize_skill_descriptors,
 )
-from agents.agent_core.routing.handle import (
+from imp_agent_core.agents.agent_core.routing.handle import (
     AgentInvocationResult,
     BaseAgentHandle,
     LocalA2AHandle,
     RemoteA2AHandle,
     build_agent_handle,
 )
-from agents.agent_core.routing.orchestrator import HostOrchestrator
-from agents.agent_core.routing.registry import (
+from imp_agent_core.agents.agent_core.routing.orchestrator import HostOrchestrator
+from imp_agent_core.agents.agent_core.routing.registry import (
     DynamicAgentRegistry,
     get_global_agent_registry,
     register_agent_package,
     reset_global_agent_registry,
 )
-from agents.agent_core.routing.resolver import AgentResolver
+from imp_agent_core.agents.agent_core.routing.resolver import AgentResolver
 
 __all__ = [
     "AgentBackendType",

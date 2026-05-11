@@ -23,21 +23,20 @@ from google.adk.artifacts import InMemoryArtifactService
 from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
-from langfuse import get_client
-from llm_inference_core import run_with_langfuse_trace
-
-from agents.agent_core.inference import load_agent_instruction
-from agents.agent_core.routing import (
+from imp_agent_core.agents.agent_core.inference import load_agent_instruction
+from imp_agent_core.agents.agent_core.routing import (
     AgentResolver,
     DynamicAgentRegistry,
     get_global_agent_registry,
     register_agent_package,
 )
-from agents.agent_core.sub_agent_invoke import (
+from imp_agent_core.agents.agent_core.sub_agent_invoke import (
     DEFAULT_SUB_AGENT_TOOL_INSTRUCTION,
     SubAgentInvocationPolicy,
     SubAgentToolConfig,
 )
+from langfuse import get_client
+from llm_inference_core import run_with_langfuse_trace
 
 _AGENT_CORE_STATE_PREFIX = "agent_core."
 _SUBQUERY_DEPTH_KEY = f"{_AGENT_CORE_STATE_PREFIX}subquery_depth"

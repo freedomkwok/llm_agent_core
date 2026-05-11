@@ -7,7 +7,16 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
-from agents.agent_core.a2a import (
+from imp_agent_core.agents.agent_core.adk import ConfiguredA2aExecutor
+from imp_agent_core.agents.agent_core.routing import (
+    AgentDescriptor,
+    DynamicAgentRegistry,
+    build_local_descriptor_from_agent_card,
+    get_global_agent_registry,
+)
+from imp_agent_core.agents.zep_agent._env import bootstrap_env
+
+from imp_agent_core.agents.agent_core.a2a import (
     A2aRuntime,
     LocalA2aAgent,
     OrchestrationMode,
@@ -15,14 +24,6 @@ from agents.agent_core.a2a import (
     configured_a2a_runtime,
     set_local_a2a_orchestration_mode,
 )
-from agents.agent_core.adk import ConfiguredA2aExecutor
-from agents.agent_core.routing import (
-    AgentDescriptor,
-    DynamicAgentRegistry,
-    build_local_descriptor_from_agent_card,
-    get_global_agent_registry,
-)
-from agents.zep_agent._env import bootstrap_env
 
 bootstrap_env()
 config_path = Path(__file__).with_name("config.yaml")

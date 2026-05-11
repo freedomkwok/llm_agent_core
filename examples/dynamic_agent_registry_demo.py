@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import asyncio
 
-from agents.planning_agent import register_local_planning_agent
+from imp_agent_core.agents.planning_agent import register_local_planning_agent
 
-from agents.agent_core import DynamicAgentRegistry, HostOrchestrator, OrchestrationMode
-from agents.agent_core.routing.descriptor import normalize_skill_descriptors
+from imp_agent_core.agents.agent_core import DynamicAgentRegistry, HostOrchestrator, OrchestrationMode
+from imp_agent_core.agents.agent_core.routing.descriptor import normalize_skill_descriptors
 
 
 async def main() -> None:

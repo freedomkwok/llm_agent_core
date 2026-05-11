@@ -1,11 +1,18 @@
 # SPDX-License-Identifier: Apache-2.0
 import asyncio
 
-from agents.agent_core import DynamicAgentRegistry
-from agents.skill_route_agent.registry import register_local_skill_route_agent
-from agents.skill_route_agent.a2a_agent_core import SkillRouteAdkAgent
-from agents.skill_route_agent.schemas import SkillRouteSchema, ZepQueryParams, ZepSearchScope
-from agents.skill_route_agent.utils.zep_helper import ZepQueryRequest, ZepSkillCandidate
+from imp_agent_core.agents.agent_core import DynamicAgentRegistry
+from imp_agent_core.agents.skill_route_agent.a2a_agent_core import SkillRouteAdkAgent
+from imp_agent_core.agents.skill_route_agent.registry import register_local_skill_route_agent
+from imp_agent_core.agents.skill_route_agent.schemas import (
+    SkillRouteSchema,
+    ZepQueryParams,
+    ZepSearchScope,
+)
+from imp_agent_core.agents.skill_route_agent.utils.zep_helper import (
+    ZepQueryRequest,
+    ZepSkillCandidate,
+)
 
 
 class FakeLocalSkillRouteA2AAgent:
