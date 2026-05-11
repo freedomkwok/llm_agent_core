@@ -6,8 +6,6 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
-from zep_cloud.types import SearchFilters
-
 from agents.zep_agent.tools.zep_helper import (
     ZepToolClient,
     extract_items,
@@ -23,12 +21,6 @@ _MAX_ZEP_SEARCH_LIMIT = 10
 @lru_cache(maxsize=1)
 def _client() -> ZepToolClient:
     return ZepToolClient()
-
-
-def _zep_search_filters(raw_filters: dict[str, Any] | None) -> SearchFilters | None:
-    if not raw_filters:
-        return None
-    return SearchFilters(**raw_filters)
 
 
 def _zep_reranker(raw_reranker: str) -> str | None:
@@ -169,12 +161,12 @@ def search_nodes(
     resolved_graph_id = client.resolve_graph_id(graph_id)
     if not query.strip() or not resolved_graph_id:
         return {"graph_id": resolved_graph_id, "nodes": [], "count": 0}
-    response = client.client.graph.search(
+    response = client.search_graph(
         query=query.strip(),
         graph_id=resolved_graph_id,
         scope="nodes",
         limit=_zep_search_limit(limit),
-        search_filters=_zep_search_filters(search_filters),
+        search_filters=search_filters,
         bfs_origin_node_uuids=bfs_origin_node_uuids,
         center_node_uuid=center_node_uuid.strip() or None,
         mmr_lambda=_zep_mmr_lambda(mmr_lambda),
@@ -267,12 +259,12 @@ def search_edges(
     resolved_graph_id = client.resolve_graph_id(graph_id)
     if not query.strip() or not resolved_graph_id:
         return {"graph_id": resolved_graph_id, "edges": [], "count": 0}
-    response = client.client.graph.search(
+    response = client.search_graph(
         query=query.strip(),
         graph_id=resolved_graph_id,
         scope="edges",
         limit=_zep_search_limit(limit),
-        search_filters=_zep_search_filters(search_filters),
+        search_filters=search_filters,
         bfs_origin_node_uuids=bfs_origin_node_uuids,
         center_node_uuid=center_node_uuid.strip() or None,
         mmr_lambda=_zep_mmr_lambda(mmr_lambda),
@@ -349,12 +341,12 @@ def search_episodes(
     resolved_graph_id = client.resolve_graph_id(graph_id)
     if not query.strip() or not resolved_graph_id:
         return {"graph_id": resolved_graph_id, "episodes": [], "count": 0}
-    response = client.client.graph.search(
+    response = client.search_graph(
         query=query.strip(),
         graph_id=resolved_graph_id,
         scope="episodes",
         limit=_zep_search_limit(limit),
-        search_filters=_zep_search_filters(search_filters),
+        search_filters=search_filters,
         bfs_origin_node_uuids=bfs_origin_node_uuids,
         center_node_uuid=center_node_uuid.strip() or None,
         mmr_lambda=_zep_mmr_lambda(mmr_lambda),

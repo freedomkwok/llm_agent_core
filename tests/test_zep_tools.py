@@ -8,7 +8,7 @@ import pytest
 pytest.importorskip("a2a")
 pytest.importorskip("google.adk")
 
-from agents.zep_agent.tools import zep_tools
+from agents.zep_agent.tools import zep_helper, zep_tools
 
 
 class _FakeGraphNodeApi:
@@ -104,6 +104,144 @@ class _FakeClient:
 
     def resolve_graph_id(self, explicit_graph_id: str | None = None) -> str:
         return (explicit_graph_id or "graph-1").strip()
+
+    def search_graph(self, **kwargs):
+        return self.client.graph.search(**kwargs)
+
+
+class _FakeZepCloud:
+    def __init__(self, *, api_key: str) -> None:
+        self.api_key = api_key
+
+
+class _FakeOracleGraphApi:
+    def __init__(self) -> None:
+        self.search_calls: list[dict] = []
+
+    def search(self, **kwargs):
+        self.search_calls.append(kwargs)
+        return SimpleNamespace(nodes=[], edges=[])
+
+
+class _FakeOraclePGClient:
+    calls: list[dict] = []
+    last_client = None
+
+    @classmethod
+    def from_connection(cls, **kwargs):
+        cls.calls.append(kwargs)
+        cls.last_client = SimpleNamespace(graph=_FakeOracleGraphApi())
+        return cls.last_client
+
+
+def test_zep_tool_client_uses_zep_cloud_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ZEP_API_KEY", "cloud-key")
+    monkeypatch.delenv("ZEP_CLIENT_BACKEND", raising=False)
+    monkeypatch.setattr(zep_helper, "Zep", _FakeZepCloud)
+
+    client = zep_helper.ZepToolClient(default_graph_id="graph-1")
+
+    assert client.backend == "zep_cloud"
+    assert isinstance(client.client, _FakeZepCloud)
+    assert client.client.api_key == "cloud-key"
+
+
+def test_zep_tool_client_uses_oracle_pg_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    _FakeOraclePGClient.calls.clear()
+    monkeypatch.setenv("ZEP_CLIENT_BACKEND", "OraclePG")
+    monkeypatch.setenv("ORACLEPG_DSN", "oracle-dsn")
+    monkeypatch.setenv("ORACLEPG_USER", "oracle-user")
+    monkeypatch.setenv("ORACLEPG_PASSWORD", "oracle-password")
+    monkeypatch.setenv("GRAPH_ID", "graph-1")
+    monkeypatch.setenv("ORACLEPG_MAX_COROUTINES", "8")
+    monkeypatch.setenv("ORACLEPG_LOG_QUERIES", "true")
+    monkeypatch.setattr(
+        zep_helper,
+        "_graphiti_oracle_pg_client_class",
+        lambda: _FakeOraclePGClient,
+    )
+
+    client = zep_helper.ZepToolClient()
+
+    assert client.backend == "oraclepg"
+    assert _FakeOraclePGClient.calls == [
+        {
+            "dsn": "oracle-dsn",
+            "user": "oracle-user",
+            "password": "oracle-password",
+            "graph_id": "graph-1",
+            "max_coroutines": 8,
+            "log_queries": True,
+        }
+    ]
+
+
+def test_zep_tool_client_oracle_pg_accepts_graphdb_env_fallbacks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _FakeOraclePGClient.calls.clear()
+    monkeypatch.setenv("ZEP_CLIENT_BACKEND", "OraclePG")
+    monkeypatch.setenv("GRAPHDB_DSN", "graphdb-dsn")
+    monkeypatch.setenv("GRAPHDB_USER", "graphdb-user")
+    monkeypatch.setenv("GRAPHDB_PASSWORD", "graphdb-password")
+    monkeypatch.setenv("GRAPH_ID", "graph-1")
+    monkeypatch.delenv("ORACLEPG_DSN", raising=False)
+    monkeypatch.delenv("ORACLEPG_USER", raising=False)
+    monkeypatch.delenv("ORACLEPG_PASSWORD", raising=False)
+    monkeypatch.setattr(
+        zep_helper,
+        "_graphiti_oracle_pg_client_class",
+        lambda: _FakeOraclePGClient,
+    )
+
+    zep_helper.ZepToolClient()
+
+    assert _FakeOraclePGClient.calls[-1]["dsn"] == "graphdb-dsn"
+    assert _FakeOraclePGClient.calls[-1]["user"] == "graphdb-user"
+    assert _FakeOraclePGClient.calls[-1]["password"] == "graphdb-password"
+
+
+def test_zep_tool_client_oracle_pg_search_uses_graphiti_arguments(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _FakeOraclePGClient.calls.clear()
+    monkeypatch.setenv("ZEP_CLIENT_BACKEND", "OraclePG")
+    monkeypatch.setenv("ORACLEPG_DSN", "oracle-dsn")
+    monkeypatch.setenv("ORACLEPG_USER", "oracle-user")
+    monkeypatch.setenv("ORACLEPG_PASSWORD", "oracle-password")
+    monkeypatch.setenv("GRAPH_ID", "graph-1")
+    monkeypatch.setattr(
+        zep_helper,
+        "_graphiti_oracle_pg_client_class",
+        lambda: _FakeOraclePGClient,
+    )
+
+    client = zep_helper.ZepToolClient()
+    client.search_graph(
+        query="alpha",
+        graph_id="graph-1",
+        scope="nodes",
+        limit=3,
+        search_filters={"node_labels": ["Entity"]},
+        bfs_origin_node_uuids=["node-1"],
+        center_node_uuid="node-2",
+        mmr_lambda=0.5,
+        reranker="cross_encoder",
+        request_options={"timeout_in_seconds": 5},
+    )
+
+    assert _FakeOraclePGClient.last_client.graph.search_calls == [
+        {
+            "query": "alpha",
+            "graph_id": "graph-1",
+            "scope": "nodes",
+            "limit": 3,
+            "bfs_origin_node_uuids": ["node-1"],
+            "center_node_uuid": "node-2",
+            "reranker": "cross_encoder",
+            "search_filter": zep_helper._graphiti_search_filter({"node_labels": ["Entity"]}),
+        }
+    ]
 
 
 def test_search_nodes_and_get_node_by_id_trim_heavy_node_fields(

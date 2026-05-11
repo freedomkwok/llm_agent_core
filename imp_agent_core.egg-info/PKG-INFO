@@ -2,8 +2,10 @@ Metadata-Version: 2.4
 Name: imp-agent-core
 Version: 0.1.0
 Summary: Google ADK based chat agent scaffold
+License-Expression: Apache-2.0
 Requires-Python: >=3.11
 Description-Content-Type: text/markdown
+License-File: LICENSE
 Requires-Dist: google-adk>=1.27.1
 Requires-Dist: litellm>=1.75.5
 Requires-Dist: python-dotenv>=1.0.1
@@ -16,6 +18,7 @@ Requires-Dist: zep-cloud>=3.0.0
 Requires-Dist: a2a-sdk>=0.3.4
 Requires-Dist: google-cloud-aiplatform[adk,agent_engines]>=1.112.0
 Requires-Dist: llm-inference-core
+Requires-Dist: graphiti-core[oracle]
 Provides-Extra: dev
 Requires-Dist: pytest>=8.2.0; extra == "dev"
 Requires-Dist: pytest-cov>=5.0.0; extra == "dev"
@@ -24,6 +27,9 @@ Requires-Dist: mypy>=1.10.0; extra == "dev"
 Requires-Dist: types-PyYAML>=6.0.12.20250516; extra == "dev"
 Provides-Extra: jupyter
 Requires-Dist: ipykernel>=6.29.0; extra == "jupyter"
+Dynamic: license-file
+
+<!-- SPDX-License-Identifier: Apache-2.0 -->
 
 # imp_chat_agent
 
