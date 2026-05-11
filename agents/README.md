@@ -96,3 +96,16 @@ When using A2A as the boundary:
 - `on_get_task(...)` fetches task status/result
 
 These are transport/API calls, not the orchestration logic itself.
+
+### Sync agent prompts to Langfuse
+
+Agent prompt names live in each agent's `config.yaml`. To create or update
+those prompts in the configured Langfuse project:
+
+```bash
+uv run python -m agents.sync_langfuse_prompts --agent zep_agent --dry-run
+uv run python -m agents.sync_langfuse_prompts --agent zep_agent
+```
+
+The command loads repo `.env` through `agents.zep_agent._env`, including
+`MAP_LANGFUSE_*` to `LANGFUSE_*` mapping.

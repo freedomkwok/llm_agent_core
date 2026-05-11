@@ -124,7 +124,7 @@ def _extract_text_from_content_items(content: Any) -> list[str]:
 def _extract_final_text(task_response: Any) -> str | None:
     if not isinstance(task_response, Mapping):
         return None
-    task = task_response.get("task")
+    task = task_response.get("task") if isinstance(task_response.get("task"), Mapping) else task_response
     if not isinstance(task, Mapping):
         return None
     artifacts = task.get("artifacts")
