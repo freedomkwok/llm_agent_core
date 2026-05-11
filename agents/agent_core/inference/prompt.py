@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Mapping
 from typing import Any
 
 from llm_inference_core import ProjectContext, make_prompt_provider
 
 from agents.agent_core.inference.settings import build_default_inference_settings
+
+logger = logging.getLogger(__name__)
 
 
 def default_instruction_prompt_name(agent_name: str) -> str:
@@ -42,7 +45,13 @@ def load_agent_instruction(
         )
         prompt_provider = make_prompt_provider(settings=settings, project_context=project_context)
         prompt = prompt_provider.get(prompt_name, label=prompt_label)
-    except Exception:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "Failed to load instruction prompt %s (label=%s); using fallback instruction.",
+            prompt_name,
+            prompt_label,
+            exc_info=exc,
+        )
         return fallback_instruction
 
     if isinstance(prompt, str):
@@ -50,5 +59,6 @@ def load_agent_instruction(
         if instruction:
             return instruction
     return fallback_instruction
+
 
 __all__ = ["default_instruction_prompt_name", "load_agent_instruction"]

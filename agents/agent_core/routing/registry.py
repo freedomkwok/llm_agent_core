@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from importlib import import_module
+from inspect import signature
+from pkgutil import iter_modules
 from typing import Any
 
 from agents.agent_core.routing.descriptor import (
@@ -153,3 +156,66 @@ class DynamicAgentRegistry:
             descriptor = self.get_descriptor(agent_id)
             self._handles[agent_id] = build_agent_handle(descriptor)
         return self._handles[agent_id]
+
+
+_GLOBAL_AGENT_REGISTRY = DynamicAgentRegistry()
+
+
+def get_global_agent_registry() -> DynamicAgentRegistry:
+    """Return the process-wide agent registry."""
+    return _GLOBAL_AGENT_REGISTRY
+
+
+def register_agent_package(
+    registry: DynamicAgentRegistry | None = None,
+    *,
+    package_name: str = "agents",
+) -> list[AgentDescriptor]:
+    """Register worker agents exposed by registry modules under an agent package."""
+    target_registry = registry or get_global_agent_registry()
+    package = import_module(package_name)
+    package_paths = getattr(package, "__path__", None)
+    if package_paths is None:
+        return []
+
+    registered: list[AgentDescriptor] = []
+    for module_info in iter_modules(package_paths, prefix=f"{package_name}."):
+        if not module_info.ispkg:
+            continue
+        if module_info.name.rsplit(".", 1)[-1] == "agent_core":
+            continue
+        registry_module_name = f"{module_info.name}.registry"
+        try:
+            registry_module = import_module(registry_module_name)
+        except ModuleNotFoundError as exc:
+            if exc.name == registry_module_name:
+                continue
+            raise
+        for registrar in _agent_registrars(registry_module):
+            registered.append(_call_agent_registrar(registrar, target_registry))
+    return registered
+
+
+def _agent_registrars(registry_module: Any) -> list[Any]:
+    exact_registrar = getattr(registry_module, "register_worker_agent", None)
+    if callable(exact_registrar):
+        return [exact_registrar]
+    return [
+        registrar
+        for name, registrar in vars(registry_module).items()
+        if name.startswith("register_") and name.endswith("_worker_agent") and callable(registrar)
+    ]
+
+
+def _call_agent_registrar(registrar: Any, registry: DynamicAgentRegistry) -> AgentDescriptor:
+    registrar_signature = signature(registrar)
+    if "registry" in registrar_signature.parameters:
+        return registrar(registry=registry, replace=True)
+    return registrar(replace=True)
+
+
+def reset_global_agent_registry() -> DynamicAgentRegistry:
+    """Reset and return the process-wide agent registry."""
+    global _GLOBAL_AGENT_REGISTRY
+    _GLOBAL_AGENT_REGISTRY = DynamicAgentRegistry()
+    return _GLOBAL_AGENT_REGISTRY

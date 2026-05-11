@@ -106,7 +106,10 @@ def build_default_inference_settings(
             "langfuse_base_url": os.getenv("LANGFUSE_BASE_URL", "http://localhost:3000"),
         },
         "prompt_label_config": {
-            "prompt_base_dir": os.getenv("PROMPT_BASE_DIR", "app/prompts"),
+            "prompt_base_dir": os.getenv(
+                "PROMPT_BASE_DIR",
+                os.getenv("PROMPT_TEMPLATE_PATH", ""),
+            ),
             "prompt_label": os.getenv("PROMPT_LABEL", "production"),
             "prompt_cache_ttl_seconds": _parse_int(os.getenv("PROMPT_CACHE_TTL_SECONDS"), 60),
             "prompt_project_miss_ttl_seconds": _parse_int(

@@ -20,6 +20,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s - %(message)s",
 )
 
+
 class OrchestrationMode(StrEnum):
     """High-level orchestration mode for local A2A calls."""
 
@@ -209,7 +210,7 @@ async def run_local_a2a_orchestration(
     context: Any = None,
     include_authenticated_card: bool | None = None,
     fetch_task_response: bool | None = None,
-    task_poll_timeout_sec: float = 300.0,
+    task_poll_timeout_sec: float = 600.0,
     task_poll_interval_sec: float = 5.0,
 ) -> A2AFlowResult:
     """Run local A2A flow in host-driven or agent-internal mode."""

@@ -1,5 +1,5 @@
-from agents.agent_core import DynamicAgentRegistry
-from agents.zep_agent.registry import register_local_zep_agent
+from agents.agent_core import DynamicAgentRegistry, reset_global_agent_registry
+from agents.zep_agent.registry import register_local_zep_agent, register_zep_worker_agent
 
 
 class FakeLocalZepA2AAgent:
@@ -20,5 +20,13 @@ def test_register_local_zep_agent() -> None:
     )
 
     assert descriptor.agent_id == "zep_agent.local"
+    assert descriptor.supports_skill("route_with_zep_tools")
+
+
+def test_register_zep_worker_agent_registers_worker_descriptor() -> None:
+    registry = reset_global_agent_registry()
+    register_zep_worker_agent()
+    descriptor = registry.get_descriptor("zep_agent.worker")
+
     assert descriptor.supports_skill("route_with_zep_tools")
 

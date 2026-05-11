@@ -103,7 +103,8 @@ This keeps the architecture ready for remote transport without forcing full HTTP
 
 ### `routing/registry.py`
 
-Defines `DynamicAgentRegistry`.
+Defines `DynamicAgentRegistry`, `get_global_agent_registry`, and
+`reset_global_agent_registry`.
 
 Responsibilities:
 
@@ -117,6 +118,7 @@ Responsibilities:
   - metadata
   - backend type
 - resolve a descriptor into a cached handle
+- expose the process-wide registry used by config-driven parent executors
 
 Important:
 
@@ -196,9 +198,9 @@ This file is about **local transport flow**, not capability routing.
 
 ## ADK-backed execution support
 
-### `adk/a2a_executor.py`
+### `adk/executor.py`
 
-Defines `AdkA2aExecutionWrapper`.
+Defines `AdkA2aExecutor` and `ConfiguredA2aExecutor`.
 
 This is a shared base class for agents that use:
 
@@ -221,6 +223,7 @@ This is separate from registry/descriptor logic.
 Think of it as:
 
 - **execution runtime base**
+- **config-driven ADK agent setup**
 
 while the other new files are:
 

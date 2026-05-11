@@ -17,7 +17,12 @@ from agents.agent_core.routing.handle import (
     build_agent_handle,
 )
 from agents.agent_core.routing.orchestrator import HostOrchestrator
-from agents.agent_core.routing.registry import DynamicAgentRegistry
+from agents.agent_core.routing.registry import (
+    DynamicAgentRegistry,
+    get_global_agent_registry,
+    register_agent_package,
+    reset_global_agent_registry,
+)
 from agents.agent_core.routing.resolver import AgentResolver
 
 __all__ = [
@@ -35,5 +40,8 @@ __all__ = [
     "aggregate_tags",
     "build_agent_handle",
     "build_local_descriptor_from_agent_card",
+    "get_global_agent_registry",
     "normalize_skill_descriptors",
+    "register_agent_package",
+    "reset_global_agent_registry",
 ]

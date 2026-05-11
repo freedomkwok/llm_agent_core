@@ -18,8 +18,8 @@ flowchart TD
     ConfiguredExecutor --> AgentBuilder["concrete build_*_llm_agent"]
     AgentBuilder --> PromptLoader["load_agent_instruction"]
     AgentBuilder --> AdkAgent["ADK LlmAgent"]
-    ConfiguredExecutor --> A2aWrapper["AdkA2aExecutionWrapper"]
-    A2aWrapper --> AdkRunner["ADK Runner"]
+    ConfiguredExecutor --> A2aExecutor["AdkA2aExecutor"]
+    A2aExecutor --> AdkRunner["ADK Runner"]
 
     CardLoader --> AgentCard["AgentCard"]
     AgentCard["AgentCard"] --> AgentDescriptor["AgentDescriptor"]
@@ -56,18 +56,17 @@ or model/provider behavior.
 
 ### ADK Execution
 
-These files adapt an A2A task into ADK agent execution.
+`adk/executor.py` adapts an A2A task into ADK agent execution. It contains:
 
-- `adk/a2a_executor.py`
-  Base `AgentExecutor` implementation for A2A agents backed by ADK. It creates an ADK
-  `Runner`, manages in-memory session/memory/artifact services, runs the ADK agent,
-  extracts final text, updates A2A task state, and wraps execution in Langfuse tracing.
-
-- `adk/config_file_executor.py`
-  YAML-driven executor subclass. It loads `executor_config`, imports the configured ADK
-  agent builder, passes supported config values such as `instruction_prompt_name`,
-  `instruction_prompt_label`, and `fallback_instruction`, and exposes executor-level
-  names like `trace_name`, `artifact_name`, and `failed_text_message`.
+- `AdkA2aExecutor`, the base `AgentExecutor` implementation for A2A agents backed by
+  ADK. It creates an ADK `Runner`, manages in-memory session/memory/artifact services,
+  runs the ADK agent, extracts final text, updates A2A task state, and wraps execution
+  in Langfuse tracing.
+- `ConfiguredA2aExecutor`, the YAML-driven subclass. It loads `executor_config`, imports
+  the configured ADK agent builder, passes supported config values such as
+  `instruction_prompt_name`, `instruction_prompt_label`, and `fallback_instruction`, and
+  exposes executor-level names like `trace_name`, `artifact_name`, and
+  `failed_text_message`.
 
 This group is runtime glue for ADK. It should stay separate from agent discovery and
 registry concerns.
@@ -168,8 +167,7 @@ agents/agent_core/
     agent_card_yaml.py
     local_orchestration.py
   adk/
-    a2a_executor.py
-    config_file_executor.py
+    executor.py
   routing/
     descriptor.py
     handle.py
@@ -201,9 +199,8 @@ These are remaining name candidates for a later refactor, not changes to make au
 
 ## Refactor Risks
 
-- Import compatibility matters. Existing concrete agents should import from the new
-  grouped paths such as `agents.agent_core.adk.config_file_executor` and
-  `agents.agent_core.inference.prompt`.
+- Import compatibility matters. Existing concrete agents should import from the grouped
+  paths such as `agents.agent_core.adk.executor` and `agents.agent_core.inference.prompt`.
 - `agents.agent_core.__init__` may need to remain a stable facade during migration.
 - Tests should move with modules or keep compatibility import tests.
 - YAML builder paths such as `adk_agent_builder` reference concrete agent modules; those

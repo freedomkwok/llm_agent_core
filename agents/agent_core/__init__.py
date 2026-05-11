@@ -14,7 +14,7 @@ from agents.agent_core.a2a import (
     set_local_a2a_orchestration_mode,
 )
 from agents.agent_core.adk import (
-    AdkA2aExecutionWrapper,
+    AdkA2aExecutor,
     ConfiguredA2aExecutor,
 )
 from agents.agent_core.inference import (
@@ -34,13 +34,24 @@ from agents.agent_core.routing import (
     LocalA2AHandle,
     RemoteA2AHandle,
     SkillDescriptor,
+    get_global_agent_registry,
+    register_agent_package,
+    reset_global_agent_registry,
+)
+from agents.agent_core.sub_agent_invoke import (
+    DEFAULT_SUB_AGENT_TOOL_INSTRUCTION,
+    SubAgentInvocationPolicy,
+    SubAgentInvoker,
+    SubAgentToolConfig,
+    make_sub_agent_tool,
 )
 
 __all__ = [
     "A2AFlowResult",
-    "AdkA2aExecutionWrapper",
+    "AdkA2aExecutor",
     "build_agent_card_from_yaml",
     "ConfiguredA2aExecutor",
+    "DEFAULT_SUB_AGENT_TOOL_INSTRUCTION",
     "AgentBackendType",
     "AgentDescriptor",
     "AgentHealthStatus",
@@ -54,14 +65,21 @@ __all__ = [
     "OrchestrationMode",
     "RemoteA2AHandle",
     "SkillDescriptor",
+    "SubAgentInvocationPolicy",
+    "SubAgentInvoker",
+    "SubAgentToolConfig",
     "build_get_task_request",
     "build_local_a2a_agent",
     "build_message_payload",
     "build_post_request",
     "extract_task_id",
+    "get_global_agent_registry",
     "local_a2a_orchestration_mode",
+    "register_agent_package",
     "run_local_a2a_orchestration",
     "set_local_a2a_orchestration_mode",
+    "reset_global_agent_registry",
     "default_instruction_prompt_name",
     "load_agent_instruction",
+    "make_sub_agent_tool",
 ]

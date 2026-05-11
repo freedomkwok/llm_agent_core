@@ -43,3 +43,9 @@ executor_config:
   artifact_name: zep_agent
   # Fallback text returned when execution fails without usable output.
   failed_text_message: Failed to generate a zep agent response with text content.
+  sub_agent_tool:
+    enabled: true
+    use_global_registry: true
+    instruction_prompt: create subagent when task should be split into a new agent for search
+    instruction_prompt_name: agents/zep_query_agent/instruction_subagent
+    instruction_prompt_label: production

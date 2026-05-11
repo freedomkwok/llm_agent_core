@@ -18,6 +18,7 @@ from agents.agent_core.routing import (
     AgentDescriptor,
     DynamicAgentRegistry,
     build_local_descriptor_from_agent_card,
+    get_global_agent_registry,
 )
 from agents.zep_agent._env import bootstrap_env
 
@@ -29,12 +30,13 @@ agent_card = build_agent_card_from_yaml(config_path, config_section="card_config
 def build_local_a2a_zep_agent(
     *,
     mode: OrchestrationMode = OrchestrationMode.AGENT_INTERNAL,
+    config_section: str = "executor_config",
 ) -> A2aAgent:
     """Build local A2A zep agent from shared config-driven executor."""
     agent = A2aAgent(
         agent_card=agent_card,
         agent_executor_builder=lambda: ConfiguredA2aExecutor(
-            config_path=config_path, config_section="executor_config"
+            config_path=config_path, config_section=config_section
         ),
     )
     set_local_a2a_orchestration_mode(agent, mode)
@@ -72,4 +74,22 @@ def register_local_zep_agent(
         metadata=metadata,
     )
     return registry.register_descriptor(descriptor, replace=replace)
+
+
+def register_zep_worker_agent(
+    registry: DynamicAgentRegistry | None = None,
+    *,
+    replace: bool = True,
+) -> AgentDescriptor:
+    """Register a worker-safe zep agent in the shared or provided registry."""
+    target_registry = registry or get_global_agent_registry()
+    return register_local_zep_agent(
+        target_registry,
+        agent_id="zep_agent.worker",
+        local_builder=lambda: build_local_a2a_zep_agent(
+            mode=OrchestrationMode.AGENT_INTERNAL,
+            config_section="executor_config",
+        ),
+        replace=replace,
+    )
 

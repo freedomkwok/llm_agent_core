@@ -7,6 +7,7 @@ from typing import Any
 
 from google.adk.agents.llm_agent import LlmAgent
 
+from agents.agent_core import SubAgentToolConfig
 from agents.agent_core.inference import InferenceProviderLlmAdapter, load_agent_instruction
 from agents.zep_agent._env import bootstrap_env
 from agents.zep_agent.tools import (
@@ -36,6 +37,8 @@ def build_zep_llm_agent(
     instruction_prompt_name: str | None = None,
     instruction_prompt_label: str | None = None,
     fallback_instruction: str = _FALLBACK_INSTRUCTION,
+    name: str = _AGENT_NAME,
+    sub_agent_tool_config: SubAgentToolConfig | None = None,
 ) -> LlmAgent:
     """Build the LLM tool-calling agent for Zep-driven skill routing."""
     instruction = load_agent_instruction(
@@ -47,6 +50,18 @@ def build_zep_llm_agent(
         instruction_prompt_name=instruction_prompt_name,
         instruction_prompt_label=instruction_prompt_label,
     )
+    tools = [
+        search_nodes,
+        get_edges_for_node,
+        search_edges,
+        search_episodes,
+        get_node_by_id,
+        search_around_node,
+    ]
+    if sub_agent_tool_config is not None:
+        tools = sub_agent_tool_config.tools_for(tools)
+        instruction = sub_agent_tool_config.instruction_for(instruction)
+
     return LlmAgent(
         model=InferenceProviderLlmAdapter(
             model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
@@ -55,16 +70,7 @@ def build_zep_llm_agent(
             project_metadata=_PROJECT_METADATA,
             settings_overrides=_SETTINGS_OVERRIDES,
         ),
-        name=_AGENT_NAME,
-        description="Agent for Zep graph automated query operations.",
+        name=name,
         instruction=instruction,
-        tools=[
-            search_nodes,
-            get_edges_for_node,
-            search_edges,
-            search_episodes,
-            get_node_by_id,
-            search_around_node,
-        ],
+        tools=tools,
     )
-

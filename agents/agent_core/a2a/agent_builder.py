@@ -23,4 +23,3 @@ def build_local_a2a_agent(
     )
     agent.set_up()
     return agent
-

@@ -57,4 +57,3 @@ def build_agent_card_from_yaml(
         )
 
     return create_agent_card(agent_name=agent_name, description=description, skills=skills)
-
