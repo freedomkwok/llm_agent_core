@@ -1,3 +1,22 @@
+from agents.agent_core.inference.settings import build_default_inference_settings
+
+
+def test_build_default_inference_settings_uses_llm_base_url(monkeypatch) -> None:
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    monkeypatch.setenv("LLM_BASE_URL", "https://llm-gateway.test/v1")
+
+    settings = build_default_inference_settings()
+
+    assert settings.inference_config.openai_base_url == "https://llm-gateway.test/v1"
+
+
+def test_build_default_inference_settings_prefers_openai_base_url(monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://openai-compatible.test/v1")
+    monkeypatch.setenv("LLM_BASE_URL", "https://llm-gateway.test/v1")
+
+    settings = build_default_inference_settings()
+
+    assert settings.inference_config.openai_base_url == "https://openai-compatible.test/v1"
 # SPDX-License-Identifier: Apache-2.0
 from agents.agent_core.inference.settings import build_default_inference_settings
 

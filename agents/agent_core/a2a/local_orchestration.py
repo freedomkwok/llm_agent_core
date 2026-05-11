@@ -14,7 +14,6 @@ from typing import Any
 from uuid import uuid4
 
 from starlette.requests import Request
-from vertexai.preview.reasoning_engines import A2aAgent
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,15 +45,15 @@ class A2AFlowResult:
 
 
 def set_local_a2a_orchestration_mode(
-    a2a_agent: A2aAgent,
+    a2a_agent: Any,
     mode: OrchestrationMode,
-) -> A2aAgent:
+) -> Any:
     setattr(a2a_agent, _ORCHESTRATION_MODE_ATTR, OrchestrationMode(mode))
     return a2a_agent
 
 
 def local_a2a_orchestration_mode(
-    a2a_agent: A2aAgent,
+    a2a_agent: Any,
     *,
     default: OrchestrationMode = OrchestrationMode.HOST_DRIVEN,
 ) -> OrchestrationMode:
@@ -124,7 +123,11 @@ def _extract_text_from_content_items(content: Any) -> list[str]:
 def _extract_final_text(task_response: Any) -> str | None:
     if not isinstance(task_response, Mapping):
         return None
-    task = task_response.get("task") if isinstance(task_response.get("task"), Mapping) else task_response
+    task = (
+        task_response.get("task")
+        if isinstance(task_response.get("task"), Mapping)
+        else task_response
+    )
     if not isinstance(task, Mapping):
         return None
     artifacts = task.get("artifacts")
@@ -204,7 +207,7 @@ def extract_task_id(send_response: Any) -> str | None:
 
 async def run_local_a2a_orchestration(
     *,
-    a2a_agent: A2aAgent,
+    a2a_agent: Any,
     message_text: str,
     mode: OrchestrationMode | None = None,
     metadata: Mapping[str, Any] | None = None,

@@ -7,11 +7,12 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
-from vertexai.preview.reasoning_engines import A2aAgent
-
 from agents.agent_core.a2a import (
+    A2aRuntime,
+    LocalA2aAgent,
     OrchestrationMode,
     build_agent_card_from_yaml,
+    configured_a2a_runtime,
     set_local_a2a_orchestration_mode,
 )
 from agents.agent_core.adk import ConfiguredA2aExecutor
@@ -32,9 +33,17 @@ def build_local_a2a_zep_agent(
     *,
     mode: OrchestrationMode = OrchestrationMode.AGENT_INTERNAL,
     config_section: str = "executor_config",
-) -> A2aAgent:
+) -> Any:
     """Build local A2A zep agent from shared config-driven executor."""
-    agent = A2aAgent(
+    agent_class: type[Any]
+    if configured_a2a_runtime() == A2aRuntime.VERTEXAI:
+        from vertexai.preview.reasoning_engines import A2aAgent
+
+        agent_class = A2aAgent
+    else:
+        agent_class = LocalA2aAgent
+
+    agent = agent_class(
         agent_card=agent_card,
         agent_executor_builder=lambda: ConfiguredA2aExecutor(
             config_path=config_path, config_section=config_section

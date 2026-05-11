@@ -2,13 +2,17 @@
 """Shared agent core abstractions."""
 
 from agents.agent_core.a2a import (
+    A2A_RUNTIME_ENV,
     A2AFlowResult,
+    A2aRuntime,
+    LocalA2aAgent,
     OrchestrationMode,
     build_agent_card_from_yaml,
     build_get_task_request,
     build_local_a2a_agent,
     build_message_payload,
     build_post_request,
+    configured_a2a_runtime,
     extract_task_id,
     local_a2a_orchestration_mode,
     run_local_a2a_orchestration,
@@ -49,6 +53,8 @@ from agents.agent_core.sub_agent_invoke import (
 
 __all__ = [
     "A2AFlowResult",
+    "A2A_RUNTIME_ENV",
+    "A2aRuntime",
     "AdkA2aExecutor",
     "build_agent_card_from_yaml",
     "ConfiguredA2aExecutor",
@@ -62,6 +68,7 @@ __all__ = [
     "DynamicAgentRegistry",
     "HostOrchestrator",
     "InferenceProviderLlmAdapter",
+    "LocalA2aAgent",
     "LocalA2AHandle",
     "OrchestrationMode",
     "RemoteA2AHandle",
@@ -73,6 +80,7 @@ __all__ = [
     "build_local_a2a_agent",
     "build_message_payload",
     "build_post_request",
+    "configured_a2a_runtime",
     "extract_task_id",
     "get_global_agent_registry",
     "local_a2a_orchestration_mode",

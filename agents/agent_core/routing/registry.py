@@ -183,7 +183,8 @@ def register_agent_package(
     for module_info in iter_modules(package_paths, prefix=f"{package_name}."):
         if not module_info.ispkg:
             continue
-        if module_info.name.rsplit(".", 1)[-1] == "agent_core":
+        short_name = module_info.name.rsplit(".", 1)[-1]
+        if short_name == "agent_core":
             continue
         registry_module_name = f"{module_info.name}.registry"
         try:

@@ -125,6 +125,43 @@ def register_worker_agent(registry, *, replace=True):
     sys.modules.pop("sample_agents", None)
 
 
+def test_register_agent_package_includes_zep_agent_by_default(tmp_path, monkeypatch) -> None:
+    package_dir = tmp_path / "sample_agents"
+    package_dir.mkdir()
+    (package_dir / "__init__.py").write_text("", encoding="utf-8")
+    zep_dir = package_dir / "zep_agent"
+    zep_dir.mkdir()
+    (zep_dir / "__init__.py").write_text("", encoding="utf-8")
+    (zep_dir / "registry.py").write_text(
+        """
+from agents.agent_core.routing.descriptor import normalize_skill_descriptors
+
+
+def register_zep_worker_agent(registry, *, replace=True):
+    return registry.register_local_agent(
+        agent_id="zep_agent.worker",
+        agent_name="Zep Agent",
+        description="Temporary zep worker",
+        skills=normalize_skill_descriptors([{"id": "zep", "name": "Zep"}]),
+        local_builder=lambda: object(),
+        replace=replace,
+    )
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("AGENT_CORE_A2A_RUNTIME", raising=False)
+    monkeypatch.syspath_prepend(str(tmp_path))
+
+    registry = DynamicAgentRegistry()
+    registered = register_agent_package(registry, package_name="sample_agents")
+
+    assert [descriptor.agent_id for descriptor in registered] == ["zep_agent.worker"]
+    assert registry.get_descriptor("zep_agent.worker").supports_skill("zep")
+    sys.modules.pop("sample_agents.zep_agent.registry", None)
+    sys.modules.pop("sample_agents.zep_agent", None)
+    sys.modules.pop("sample_agents", None)
+
+
 def test_resolver_prefers_local_when_same_skill_exists_remotely() -> None:
     registry = DynamicAgentRegistry()
     local_descriptor = _register_fake_local_planning_agent(registry)

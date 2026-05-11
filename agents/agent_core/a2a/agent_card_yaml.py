@@ -7,14 +7,13 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from a2a.types import AgentSkill
-from vertexai.preview.reasoning_engines.templates.a2a import create_agent_card
+from a2a.types import AgentCapabilities, AgentCard, AgentSkill
 
 
 def build_agent_card_from_yaml(
     config_path: str | Path, *, config_section: str = "card_config"
 ) -> Any:
-    """Load AgentCard fields from YAML and return `create_agent_card(...)`."""
+    """Load AgentCard fields from YAML."""
     path = Path(config_path)
     with path.open("r", encoding="utf-8") as handle:
         config = yaml.safe_load(handle) or {}
@@ -57,4 +56,15 @@ def build_agent_card_from_yaml(
             )
         )
 
-    return create_agent_card(agent_name=agent_name, description=description, skills=skills)
+    return AgentCard(
+        name=agent_name,
+        description=description,
+        skills=skills,
+        capabilities=AgentCapabilities(streaming=False),
+        defaultInputModes=["text/plain"],
+        defaultOutputModes=["application/json"],
+        preferredTransport="HTTP+JSON",
+        supportsAuthenticatedExtendedCard=True,
+        url="http://localhost:9999/",
+        version="1.0.0",
+    )
