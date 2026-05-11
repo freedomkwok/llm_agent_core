@@ -45,7 +45,7 @@ py-modules = ["agent", "app"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["agents*"]
+include = ["agents*", "imp_agent_core*"]
 
 [tool.ruff]
 line-length = 100
