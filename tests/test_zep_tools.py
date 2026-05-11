@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import os
 from types import SimpleNamespace
 
 import pytest
@@ -8,6 +9,7 @@ import pytest
 pytest.importorskip("a2a")
 pytest.importorskip("google.adk")
 
+from agents.zep_agent import _env as zep_env
 from agents.zep_agent.tools import zep_helper, zep_tools
 
 
@@ -137,6 +139,9 @@ class _FakeOraclePGClient:
 def test_zep_tool_client_uses_zep_cloud_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ZEP_API_KEY", "cloud-key")
     monkeypatch.delenv("ZEP_CLIENT_BACKEND", raising=False)
+    monkeypatch.delenv("GRAPHDB_DSN", raising=False)
+    monkeypatch.delenv("GRAPHDB_USER", raising=False)
+    monkeypatch.delenv("GRAPHDB_PASSWORD", raising=False)
     monkeypatch.setattr(zep_helper, "Zep", _FakeZepCloud)
 
     client = zep_helper.ZepToolClient(default_graph_id="graph-1")
@@ -144,6 +149,44 @@ def test_zep_tool_client_uses_zep_cloud_by_default(monkeypatch: pytest.MonkeyPat
     assert client.backend == "zep_cloud"
     assert isinstance(client.client, _FakeZepCloud)
     assert client.client.api_key == "cloud-key"
+
+
+def test_zep_tool_client_defaults_to_oracle_pg_when_graphdb_env_is_configured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _FakeOraclePGClient.calls.clear()
+    monkeypatch.delenv("ZEP_CLIENT_BACKEND", raising=False)
+    monkeypatch.setenv("GRAPHDB_DSN", "graphdb-dsn")
+    monkeypatch.setenv("GRAPHDB_USER", "graphdb-user")
+    monkeypatch.setenv("GRAPHDB_PASSWORD", "graphdb-password")
+    monkeypatch.delenv("GRAPH_ID", raising=False)
+    monkeypatch.delenv("ORACLEPG_GRAPH_ID", raising=False)
+    monkeypatch.setattr(
+        zep_helper,
+        "_graphiti_oracle_pg_client_class",
+        lambda: _FakeOraclePGClient,
+    )
+
+    client = zep_helper.ZepToolClient()
+
+    assert client.backend == "oraclepg"
+    assert _FakeOraclePGClient.calls[-1]["dsn"] == "graphdb-dsn"
+    assert _FakeOraclePGClient.calls[-1]["user"] == "graphdb-user"
+    assert _FakeOraclePGClient.calls[-1]["password"] == "graphdb-password"
+    assert _FakeOraclePGClient.calls[-1]["graph_id"] == "GRAPHITI"
+
+
+def test_zep_bootstrap_defaults_backend_to_oracle_pg_for_graphdb_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("ZEP_CLIENT_BACKEND", raising=False)
+    monkeypatch.setenv("GRAPHDB_DSN", "graphdb-dsn")
+    monkeypatch.setenv("GRAPHDB_USER", "graphdb-user")
+    monkeypatch.setenv("GRAPHDB_PASSWORD", "graphdb-password")
+
+    zep_env.bootstrap_env()
+
+    assert os.environ["ZEP_CLIENT_BACKEND"] == "OraclePG"
 
 
 def test_zep_tool_client_uses_oracle_pg_env(monkeypatch: pytest.MonkeyPatch) -> None:

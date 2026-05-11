@@ -134,7 +134,10 @@ class ZepToolClient:
 
 
 def _zep_client_backend(value: str | None = None) -> str:
-    normalized = str(value or os.getenv("ZEP_CLIENT_BACKEND", "") or ZEP_CLIENT_BACKEND_CLOUD)
+    default_backend = (
+        ZEP_CLIENT_BACKEND_ORACLE_PG if _oracle_pg_connection_configured() else ZEP_CLIENT_BACKEND_CLOUD
+    )
+    normalized = str(value or os.getenv("ZEP_CLIENT_BACKEND", "") or default_backend)
     normalized = normalized.strip().lower().replace("_", "").replace("-", "")
     if normalized in {"zep", "zepcloud", "cloud"}:
         return ZEP_CLIENT_BACKEND_CLOUD
@@ -148,6 +151,14 @@ def _zep_cloud_client(api_key: str | None = None) -> Zep:
     if not resolved_api_key:
         raise ValueError("ZEP_API_KEY is not set")
     return Zep(api_key=resolved_api_key)
+
+
+def _oracle_pg_connection_configured() -> bool:
+    return bool(
+        _env_first("ORACLEPG_DSN", "GRAPHDB_DSN", "ORACLE_DSN")
+        and _env_first("ORACLEPG_USER", "GRAPHDB_USER", "ORACLE_USER")
+        and _env_first("ORACLEPG_PASSWORD", "GRAPHDB_PASSWORD", "ORACLE_PASSWORD")
+    )
 
 
 def _env_first(*names: str) -> str:
@@ -178,14 +189,12 @@ def _oracle_pg_client(default_graph_id: str) -> Any:
     dsn = _env_first("ORACLEPG_DSN", "GRAPHDB_DSN", "ORACLE_DSN")
     user = _env_first("ORACLEPG_USER", "GRAPHDB_USER", "ORACLE_USER")
     password = _env_first("ORACLEPG_PASSWORD", "GRAPHDB_PASSWORD", "ORACLE_PASSWORD")
-    graph_id = _env_first("ORACLEPG_GRAPH_ID", "GRAPH_ID") or default_graph_id
+    graph_id = _env_first("ORACLEPG_GRAPH_ID", "GRAPH_ID") or default_graph_id or "GRAPHITI"
     if not dsn or not user or not password:
         raise ValueError(
             "OraclePG backend requires ORACLEPG_DSN, ORACLEPG_USER, and ORACLEPG_PASSWORD "
             "(or GRAPHDB_DSN, GRAPHDB_USER, and GRAPHDB_PASSWORD)."
         )
-    if not graph_id:
-        raise ValueError("OraclePG backend requires GRAPH_ID or ORACLEPG_GRAPH_ID")
 
     return _graphiti_oracle_pg_client_class().from_connection(
         dsn=dsn,
