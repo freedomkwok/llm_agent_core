@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Unified handle abstractions for local and remote agent invocation."""
 
 from __future__ import annotations

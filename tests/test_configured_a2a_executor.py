@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import types
 from typing import Any
 

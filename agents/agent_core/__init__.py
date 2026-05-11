@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Shared agent core abstractions."""
 
 from agents.agent_core.a2a import (

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Shared helpers for constructing llm_inference_core providers."""
 
 from __future__ import annotations

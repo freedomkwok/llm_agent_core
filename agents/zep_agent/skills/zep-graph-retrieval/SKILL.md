@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 ---
 name: zep-graph-retrieval
 description: Retrieve graph entities and relationship evidence from Zep for routing and grounding.

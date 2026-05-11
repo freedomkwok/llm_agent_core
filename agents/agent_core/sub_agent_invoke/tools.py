@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """ADK function-tool factory for sub-agent invocation."""
 
 from __future__ import annotations

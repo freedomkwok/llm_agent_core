@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 ## Query Patterns
 
 Use these patterns to improve retrieval quality.

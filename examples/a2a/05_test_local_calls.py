@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Step 5: local test calls for authenticated card, send, and get-task."""
 
 from starlette.datastructures import State

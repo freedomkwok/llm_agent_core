@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Step 1: define an A2A AgentCard."""
 
 from a2a.types import AgentSkill

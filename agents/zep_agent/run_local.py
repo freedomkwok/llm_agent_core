@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Debug runner for local zep agent A2A flow."""
 
 from __future__ import annotations

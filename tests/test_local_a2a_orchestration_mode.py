@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import asyncio
 
 from agents.agent_core.a2a import (

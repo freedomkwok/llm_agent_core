@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Resolver logic for selecting agents from the dynamic registry."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Shared helper for creating local A2A agents from executor modules."""
 
 from __future__ import annotations

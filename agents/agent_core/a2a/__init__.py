@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """A2A transport and card helpers."""
 
 from agents.agent_core.a2a.agent_builder import build_local_a2a_agent

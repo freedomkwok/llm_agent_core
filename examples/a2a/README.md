@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # A2A Local Flow Examples
 
 This folder mirrors the local Agent2Agent (A2A) development flow:

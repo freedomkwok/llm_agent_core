@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """High-level capability-based host orchestration for dynamic agents."""
 
 from __future__ import annotations

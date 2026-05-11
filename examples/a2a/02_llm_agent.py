@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Step 2: define an ADK LlmAgent + tool."""
 
 import os

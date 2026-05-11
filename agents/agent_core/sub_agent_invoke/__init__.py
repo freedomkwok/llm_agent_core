@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Sub-agent invocation helpers for ADK-backed A2A agents."""
 
 from agents.agent_core.sub_agent_invoke.invoker import SubAgentInvoker

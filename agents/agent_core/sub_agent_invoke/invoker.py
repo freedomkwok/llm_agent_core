@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Registry-backed sub-agent invocation."""
 
 from __future__ import annotations

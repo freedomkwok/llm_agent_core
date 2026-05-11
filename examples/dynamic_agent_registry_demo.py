@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Demo for dynamic agent registry and unified host orchestration."""
 
 from __future__ import annotations

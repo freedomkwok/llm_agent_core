@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 from agents.agent_core import (
     DEFAULT_SUB_AGENT_TOOL_INSTRUCTION,
     ConfiguredA2aExecutor,

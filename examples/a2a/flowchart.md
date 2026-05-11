@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # A2A Request/Task Flow
 
 ## File Hierarchy (who is which)

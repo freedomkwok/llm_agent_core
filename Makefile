@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 .PHONY: setup run lint test typecheck build-llm
 
 setup:

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Step 4: create local A2aAgent instance."""
 
 import importlib.util

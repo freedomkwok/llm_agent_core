@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """LlmAgent configuration for zep_agent."""
 
 from __future__ import annotations

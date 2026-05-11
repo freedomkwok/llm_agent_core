@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 ## Agent Core
 
 This folder contains the shared runtime layer that sits above concrete agents such as `planning_agent`.

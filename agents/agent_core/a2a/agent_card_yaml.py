@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Build A2A AgentCard values from YAML config."""
 
 from __future__ import annotations

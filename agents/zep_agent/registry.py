@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Registration helpers for zep_agent backend."""
 
 from __future__ import annotations

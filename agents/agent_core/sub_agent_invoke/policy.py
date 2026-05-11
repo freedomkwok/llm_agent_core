@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Sub-agent invocation policy models."""
 
 from __future__ import annotations

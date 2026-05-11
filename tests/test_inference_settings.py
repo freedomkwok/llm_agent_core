@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 from agents.agent_core.inference.settings import build_default_inference_settings
 
 

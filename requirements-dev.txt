@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 -r requirements.txt
 # Local package (editable). Same path as pyproject.toml llm-inference-core dependency.
 -e /Users/freedomkwokmacbookpro/Github/imp/llm_inference_core

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Step 3: define AgentExecutor that runs an ADK agent."""
 
 import os

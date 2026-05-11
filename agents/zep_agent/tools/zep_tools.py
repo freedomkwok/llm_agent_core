@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """LLM tool functions for Zep graph operations."""
 
 from __future__ import annotations

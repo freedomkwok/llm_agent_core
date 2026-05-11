@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # imp_chat_agent
 
 Python 3.11 Google ADK project scaffold for agent chat.

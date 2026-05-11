@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Dynamic runtime registry for local and remote agent descriptors."""
 
 from __future__ import annotations

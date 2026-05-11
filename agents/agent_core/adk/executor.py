@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """ADK-backed A2A task executors."""
 
 from __future__ import annotations

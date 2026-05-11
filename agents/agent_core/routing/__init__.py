@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Agent catalog, registry, and capability routing helpers."""
 
 from agents.agent_core.routing.descriptor import (

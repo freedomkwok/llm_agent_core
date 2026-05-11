@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Zep Cloud graph examples: load credentials from .env, then fetch nodes and edges."""
 
 from __future__ import annotations

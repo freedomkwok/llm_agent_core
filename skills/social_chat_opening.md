@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Skill: 刚认识阶段对话分析与破冰
 
 ## Skill 名称

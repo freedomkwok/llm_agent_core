@@ -1,3 +1,5 @@
+SPDX-License-Identifier: Apache-2.0
+
 第一层：structured filter / graph filter
 先用你已有的结构条件缩小范围，比如：
 	•	只看某个 group_id

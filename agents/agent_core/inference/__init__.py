@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Inference provider, ADK LLM adapter, and prompt helpers."""
 
 from agents.agent_core.inference.llm_adapter import InferenceProviderLlmAdapter

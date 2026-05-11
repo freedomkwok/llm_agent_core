@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Agent Core Map
 
 This document maps the current `agents.agent_core` package so future refactors can move

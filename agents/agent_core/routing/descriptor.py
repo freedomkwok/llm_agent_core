@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Descriptor models for dynamically registered agent backends."""
 
 from __future__ import annotations

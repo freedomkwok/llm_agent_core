@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Measure OpenAI ChatGPT latency across several models (default: every id in DEFAULT_MODELS).
 

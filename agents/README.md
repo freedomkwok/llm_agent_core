@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 ## Agents Flow
 
 This folder contains agent building blocks and shared execution infrastructure.

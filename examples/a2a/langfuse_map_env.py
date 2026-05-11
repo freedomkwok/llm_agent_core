@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Load repo .env and map MAP_LANGFUSE_* → LANGFUSE_* for Langfuse SDK."""
 
 from __future__ import annotations

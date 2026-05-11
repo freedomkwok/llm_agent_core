@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 skill_executor_agent = LlmAgent(
     name="skill_executor_agent",
     model="gemini-flash-latest",
