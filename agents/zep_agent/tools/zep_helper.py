@@ -135,7 +135,9 @@ class ZepToolClient:
 
 def _zep_client_backend(value: str | None = None) -> str:
     default_backend = (
-        ZEP_CLIENT_BACKEND_ORACLE_PG if _oracle_pg_connection_configured() else ZEP_CLIENT_BACKEND_CLOUD
+        ZEP_CLIENT_BACKEND_ORACLE_PG
+        if _oracle_pg_connection_configured()
+        else ZEP_CLIENT_BACKEND_CLOUD
     )
     normalized = str(value or os.getenv("ZEP_CLIENT_BACKEND", "") or default_backend)
     normalized = normalized.strip().lower().replace("_", "").replace("-", "")
