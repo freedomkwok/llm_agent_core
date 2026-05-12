@@ -110,9 +110,10 @@ class AdkA2aExecutor(AgentExecutor, ABC):
             except (TypeError, ValueError):
                 state_delta[_SUBQUERY_DEPTH_KEY] = 0
 
-        if "graph_id" in metadata:
-            raw_graph_id = metadata.get("graph_id")
-            state_delta["graph_id"] = str(raw_graph_id).strip() if raw_graph_id is not None else ""
+        for key in ("graph_id", "graph_backend"):
+            if key in metadata:
+                raw_value = metadata.get(key)
+                state_delta[key] = str(raw_value).strip() if raw_value is not None else ""
         return state_delta
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:

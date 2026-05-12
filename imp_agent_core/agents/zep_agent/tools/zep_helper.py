@@ -10,7 +10,7 @@ from typing import Any
 from zep_cloud import Zep
 
 ZEP_CLIENT_BACKEND_CLOUD = "zep_cloud"
-ZEP_CLIENT_BACKEND_ORACLE_PG = "oraclepg"
+ZEP_CLIENT_BACKEND_ORACLE_PG = "oracle"
 
 
 def to_plain_dict(value: Any) -> dict[str, Any]:
@@ -76,7 +76,7 @@ class ZepToolClient:
         default_graph_id: str | None = None,
         backend: str | None = None,
     ) -> None:
-        self.backend = _zep_client_backend(backend)
+        self.backend = _graph_client_backend(backend)
         self.default_graph_id = (default_graph_id or os.getenv("GRAPH_ID", "")).strip()
         self.client = (
             _oracle_pg_client(self.default_graph_id)
@@ -133,7 +133,7 @@ class ZepToolClient:
         )
 
 
-def _zep_client_backend(value: str | None = None) -> str:
+def _graph_client_backend(value: str | None = None) -> str:
     default_backend = (
         ZEP_CLIENT_BACKEND_ORACLE_PG
         if _oracle_pg_connection_configured()

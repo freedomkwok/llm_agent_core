@@ -241,6 +241,7 @@ def test_a2a_executor_seeds_agent_core_state_from_request_context() -> None:
         parent_span_id="span-1",
         incoming_metadata={
             "graph_id": "graph-1",
+            "graph_backend": "oracle",
             "agent_core.subquery_depth": 2,
             "custom": "kept out",
         },
@@ -254,4 +255,5 @@ def test_a2a_executor_seeds_agent_core_state_from_request_context() -> None:
         "agent_core.parent_span_id": "span-1",
         "agent_core.subquery_depth": 2,
         "graph_id": "graph-1",
+        "graph_backend": "oracle",
     }

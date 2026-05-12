@@ -3,8 +3,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from functools import lru_cache
 from typing import Any
+
+from google.adk.tools.tool_context import ToolContext
 
 from imp_agent_core.agents.zep_agent.tools.zep_helper import (
     ZepToolClient,
@@ -18,9 +21,27 @@ _REQUEST_OPTION_KEYS = {"timeout_in_seconds", "max_retries"}
 _MAX_ZEP_SEARCH_LIMIT = 10
 
 
-@lru_cache(maxsize=1)
-def _client() -> ZepToolClient:
-    return ZepToolClient()
+@lru_cache(maxsize=8)
+def _client(backend: str = "") -> ZepToolClient:
+    return ZepToolClient(backend=backend or None)
+
+
+def _tool_state(tool_context: ToolContext | None) -> Mapping[str, Any]:
+    state = getattr(tool_context, "state", None)
+    return state if isinstance(state, Mapping) else {}
+
+
+def _state_text(tool_context: ToolContext | None, key: str) -> str:
+    value = _tool_state(tool_context).get(key)
+    return str(value).strip() if value is not None else ""
+
+
+def _client_for_tool(tool_context: ToolContext | None) -> ZepToolClient:
+    return _client(_state_text(tool_context, "graph_backend"))
+
+
+def _graph_id_for_tool(explicit_graph_id: str, tool_context: ToolContext | None) -> str:
+    return explicit_graph_id.strip() or _state_text(tool_context, "graph_id")
 
 
 def _zep_reranker(raw_reranker: str) -> str | None:
@@ -86,6 +107,7 @@ def search_nodes(
     mmr_lambda: float | None = None,
     reranker: str = "",
     request_options: dict[str, Any] | None = None,
+    tool_context: ToolContext | None = None,
 ) -> dict[str, Any]:
     """Find graph entities relevant to a natural-language query.
 
@@ -157,8 +179,8 @@ def search_nodes(
           "count": int
         }
     """
-    client = _client()
-    resolved_graph_id = client.resolve_graph_id(graph_id)
+    client = _client_for_tool(tool_context)
+    resolved_graph_id = client.resolve_graph_id(_graph_id_for_tool(graph_id, tool_context))
     if not query.strip() or not resolved_graph_id:
         return {"graph_id": resolved_graph_id, "nodes": [], "count": 0}
     response = client.search_graph(
@@ -191,6 +213,7 @@ def search_edges(
     mmr_lambda: float | None = None,
     reranker: str = "",
     request_options: dict[str, Any] | None = None,
+    tool_context: ToolContext | None = None,
 ) -> dict[str, Any]:
     """Find relationship facts relevant to a natural-language query.
 
@@ -255,8 +278,8 @@ def search_edges(
           "count": int
         }
     """
-    client = _client()
-    resolved_graph_id = client.resolve_graph_id(graph_id)
+    client = _client_for_tool(tool_context)
+    resolved_graph_id = client.resolve_graph_id(_graph_id_for_tool(graph_id, tool_context))
     if not query.strip() or not resolved_graph_id:
         return {"graph_id": resolved_graph_id, "edges": [], "count": 0}
     response = client.search_graph(
@@ -289,6 +312,7 @@ def search_episodes(
     mmr_lambda: float | None = None,
     reranker: str = "",
     request_options: dict[str, Any] | None = None,
+    tool_context: ToolContext | None = None,
 ) -> dict[str, Any]:
     """Find source episodes relevant to a natural-language query.
 
@@ -337,8 +361,8 @@ def search_episodes(
           "count": int
         }
     """
-    client = _client()
-    resolved_graph_id = client.resolve_graph_id(graph_id)
+    client = _client_for_tool(tool_context)
+    resolved_graph_id = client.resolve_graph_id(_graph_id_for_tool(graph_id, tool_context))
     if not query.strip() or not resolved_graph_id:
         return {"graph_id": resolved_graph_id, "episodes": [], "count": 0}
     response = client.search_graph(
@@ -365,7 +389,10 @@ def search_episodes(
     return {"graph_id": resolved_graph_id, "episodes": episodes, "count": len(episodes)}
 
 
-def get_edges_for_node(node_uuid: str) -> dict[str, Any]:
+def get_edges_for_node(
+    node_uuid: str,
+    tool_context: ToolContext | None = None,
+) -> dict[str, Any]:
     """Fetch all edges directly connected to one node.
 
     Best for local graph expansion around a known entity node.
@@ -380,7 +407,7 @@ def get_edges_for_node(node_uuid: str) -> dict[str, Any]:
           "count": int
         }
     """
-    client = _client()
+    client = _client_for_tool(tool_context)
     normalized_uuid = str(node_uuid).strip()
     if not normalized_uuid:
         return {"node_uuid": normalized_uuid, "edges": [], "count": 0}
@@ -397,7 +424,10 @@ def get_edges_for_node(node_uuid: str) -> dict[str, Any]:
     return {"node_uuid": normalized_uuid, "edges": edges, "count": len(edges)}
 
 
-def get_node_by_id(node_uuid: str) -> dict[str, Any]:
+def get_node_by_id(
+    node_uuid: str,
+    tool_context: ToolContext | None = None,
+) -> dict[str, Any]:
     """Fetch one node by UUID and return a compact, model-safe shape.
 
     Best when the model already has a node identifier and needs stable node
@@ -413,7 +443,7 @@ def get_node_by_id(node_uuid: str) -> dict[str, Any]:
           "error": str (optional)
         }
     """
-    client = _client()
+    client = _client_for_tool(tool_context)
     normalized_uuid = str(node_uuid).strip()
     if not normalized_uuid:
         return {"node_uuid": normalized_uuid, "node": None}
@@ -429,6 +459,7 @@ def search_around_node(
     query: str = "",
     limit: int = 10,
     graph_id: str = "",
+    tool_context: ToolContext | None = None,
 ) -> dict[str, Any]:
     """Build a neighborhood context bundle around a node.
 
@@ -452,7 +483,7 @@ def search_around_node(
           "related_edges": [...]
         }
     """
-    node_result = get_node_by_id(node_uuid=node_uuid)
+    node_result = get_node_by_id(node_uuid=node_uuid, tool_context=tool_context)
     node = node_result.get("node")
     if not isinstance(node, dict):
         return {
@@ -462,10 +493,20 @@ def search_around_node(
             "related_nodes": [],
             "related_edges": [],
         }
-    edge_result = get_edges_for_node(node_uuid=node_uuid)
+    edge_result = get_edges_for_node(node_uuid=node_uuid, tool_context=tool_context)
     fallback_query = query.strip() or str(node.get("name") or node.get("summary") or node_uuid)
-    related_nodes = search_nodes(query=fallback_query, limit=limit, graph_id=graph_id)
-    related_edges = search_edges(query=fallback_query, limit=limit, graph_id=graph_id)
+    related_nodes = search_nodes(
+        query=fallback_query,
+        limit=limit,
+        graph_id=graph_id,
+        tool_context=tool_context,
+    )
+    related_edges = search_edges(
+        query=fallback_query,
+        limit=limit,
+        graph_id=graph_id,
+        tool_context=tool_context,
+    )
     return {
         "node_uuid": str(node_uuid).strip(),
         "node": node,

@@ -169,7 +169,7 @@ def test_zep_tool_client_defaults_to_oracle_pg_when_graphdb_env_is_configured(
 
     client = zep_helper.ZepToolClient()
 
-    assert client.backend == "oraclepg"
+    assert client.backend == "oracle"
     assert _FakeOraclePGClient.calls[-1]["dsn"] == "graphdb-dsn"
     assert _FakeOraclePGClient.calls[-1]["user"] == "graphdb-user"
     assert _FakeOraclePGClient.calls[-1]["password"] == "graphdb-password"
@@ -206,7 +206,7 @@ def test_zep_tool_client_uses_oracle_pg_env(monkeypatch: pytest.MonkeyPatch) -> 
 
     client = zep_helper.ZepToolClient()
 
-    assert client.backend == "oraclepg"
+    assert client.backend == "oracle"
     assert _FakeOraclePGClient.calls == [
         {
             "dsn": "oracle-dsn",
@@ -290,7 +290,7 @@ def test_zep_tool_client_oracle_pg_search_uses_graphiti_arguments(
 def test_search_nodes_and_get_node_by_id_trim_heavy_node_fields(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(zep_tools, "_client", lambda: _FakeClient())
+    monkeypatch.setattr(zep_tools, "_client", lambda _backend="": _FakeClient())
 
     search_result = zep_tools.search_nodes(query="alpha", graph_id="graph-1", limit=2)
     assert search_result["count"] == 2
@@ -321,7 +321,7 @@ def test_search_episodes_uses_episode_scope_and_sorts_by_score(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fake_client = _FakeClient()
-    monkeypatch.setattr(zep_tools, "_client", lambda: fake_client)
+    monkeypatch.setattr(zep_tools, "_client", lambda _backend="": fake_client)
 
     search_result = zep_tools.search_episodes(
         query="source",
@@ -345,10 +345,37 @@ def test_search_episodes_uses_episode_scope_and_sorts_by_score(
 
 def test_search_limit_is_capped_to_zep_maximum(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_client = _FakeClient()
-    monkeypatch.setattr(zep_tools, "_client", lambda: fake_client)
+    monkeypatch.setattr(zep_tools, "_client", lambda _backend="": fake_client)
 
     zep_tools.search_nodes(query="alpha", graph_id="graph-1", limit=100)
     zep_tools.search_edges(query="alpha", graph_id="graph-1", limit=0)
 
     assert fake_client.client.graph.search_calls[-2]["limit"] == 10
     assert fake_client.client.graph.search_calls[-1]["limit"] == 1
+
+
+def test_search_nodes_uses_tool_context_backend_and_graph_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+    fake_client = _FakeClient()
+
+    def fake_client_for_backend(backend: str = "") -> _FakeClient:
+        calls.append(backend)
+        return fake_client
+
+    monkeypatch.setattr(zep_tools, "_client", fake_client_for_backend)
+
+    result = zep_tools.search_nodes(
+        query="alpha",
+        tool_context=SimpleNamespace(
+            state={
+                "graph_id": "graph-from-project",
+                "graph_backend": "oracle",
+            }
+        ),
+    )
+
+    assert calls == ["oracle"]
+    assert result["graph_id"] == "graph-from-project"
+    assert fake_client.client.graph.search_calls[-1]["graph_id"] == "graph-from-project"
