@@ -41,20 +41,10 @@ jupyter = [
 
 [tool.setuptools]
 py-modules = ["agent", "app"]
-packages = [
-    "imp_agent_core.agents",
-    "imp_agent_core.agents.agent_core",
-    "imp_agent_core.agents.agent_core.a2a",
-    "imp_agent_core.agents.agent_core.adk",
-    "imp_agent_core.agents.agent_core.inference",
-    "imp_agent_core.agents.agent_core.routing",
-    "imp_agent_core.agents.agent_core.sub_agent_invoke",
-    "imp_agent_core.agents.zep_agent",
-    "imp_agent_core.agents.zep_agent.tools",
-]
 
-[tool.setuptools.package-dir]
-"imp_agent_core.agents" = "agents"
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["imp_agent_core*"]
 
 [tool.ruff]
 line-length = 100
