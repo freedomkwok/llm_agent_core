@@ -29,7 +29,7 @@ card_config:
 # Runtime executor wiring for this agent.
 executor_config:
   # Import path to the callable that builds the ADK agent instance.
-  adk_agent_builder: agents.zep_agent.a2a_agent_core.build_zep_llm_agent
+  adk_agent_builder: imp_agent_core.agents.zep_agent.a2a_agent_core.build_zep_llm_agent
   # Prompt name used by llm_inference_core prompt versioning for agent instruction.
   instruction_prompt_name: agents/zep_query_agent/instruction
   # Prompt label used when resolving instruction prompt from Langfuse/file provider.

@@ -7,8 +7,9 @@ import logging
 from collections.abc import Mapping
 from typing import Any
 
-from imp_agent_core.agents.agent_core.inference.settings import build_default_inference_settings
 from llm_inference_core import ProjectContext, make_prompt_provider
+
+from imp_agent_core.agents.agent_core.inference.settings import build_default_inference_settings
 
 logger = logging.getLogger(__name__)
 

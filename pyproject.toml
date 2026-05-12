@@ -40,7 +40,7 @@ jupyter = [
 
 
 [tool.setuptools]
-py-modules = ["agent", "app"]
+py-modules = ["agent"]
 
 [tool.setuptools.packages.find]
 where = ["."]
