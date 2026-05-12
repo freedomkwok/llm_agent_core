@@ -9,9 +9,8 @@ import pytest
 pytest.importorskip("a2a")
 pytest.importorskip("google.adk")
 
-from imp_agent_core.agents.zep_agent.tools import zep_helper, zep_tools
-
 from imp_agent_core.agents.zep_agent import _env as zep_env
+from imp_agent_core.agents.zep_agent.tools import zep_helper, zep_tools
 
 
 class _FakeGraphNodeApi:

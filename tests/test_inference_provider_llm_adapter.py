@@ -7,9 +7,8 @@ pytest.importorskip("google.adk")
 
 from google.adk.models.llm_request import LlmRequest
 from google.genai import types
-from pydantic import BaseModel
-
 from imp_agent_core.agents.agent_core.inference.llm_adapter import InferenceProviderLlmAdapter
+from pydantic import BaseModel
 
 
 class FakeInferResult(BaseModel):

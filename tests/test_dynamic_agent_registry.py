@@ -3,15 +3,14 @@ import asyncio
 import sys
 from typing import Any
 
-from imp_agent_core.agents.agent_core.routing.descriptor import normalize_skill_descriptors
-from imp_agent_core.agents.agent_core.routing.resolver import AgentResolver
-
 from imp_agent_core.agents.agent_core import (
     DynamicAgentRegistry,
     HostOrchestrator,
     OrchestrationMode,
     register_agent_package,
 )
+from imp_agent_core.agents.agent_core.routing.descriptor import normalize_skill_descriptors
+from imp_agent_core.agents.agent_core.routing.resolver import AgentResolver
 
 
 class FakeLocalPlanningA2AAgent:

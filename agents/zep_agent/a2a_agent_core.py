@@ -7,6 +7,7 @@ import os
 from typing import Any
 
 from google.adk.agents.llm_agent import LlmAgent
+from imp_agent_core.agents.agent_core import SubAgentToolConfig
 from imp_agent_core.agents.agent_core.inference import (
     InferenceProviderLlmAdapter,
     load_agent_instruction,
@@ -20,8 +21,6 @@ from imp_agent_core.agents.zep_agent.tools import (
     search_episodes,
     search_nodes,
 )
-
-from imp_agent_core.agents.agent_core import SubAgentToolConfig
 
 bootstrap_env()
 

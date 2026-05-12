@@ -6,7 +6,6 @@ from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
 from a2a.server.tasks import TaskUpdater
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill, TextPart
-
 from imp_agent_core.agents.agent_core.a2a import (
     A2aRuntime,
     LocalA2aAgent,

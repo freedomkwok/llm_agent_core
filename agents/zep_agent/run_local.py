@@ -11,12 +11,11 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from imp_agent_core.agents.zep_agent.registry import build_local_a2a_zep_agent  # noqa: E402
-
 from imp_agent_core.agents.agent_core.a2a import (  # noqa: E402
     OrchestrationMode,
     run_local_a2a_orchestration,
 )
+from imp_agent_core.agents.zep_agent.registry import build_local_a2a_zep_agent  # noqa: E402
 
 
 async def _main() -> None:
