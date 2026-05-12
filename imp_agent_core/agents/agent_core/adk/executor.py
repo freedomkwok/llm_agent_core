@@ -41,6 +41,7 @@ from imp_agent_core.agents.agent_core.sub_agent_invoke import (
 
 _AGENT_CORE_STATE_PREFIX = "agent_core."
 _SUBQUERY_DEPTH_KEY = f"{_AGENT_CORE_STATE_PREFIX}subquery_depth"
+_BUILTIN_AGENT_PACKAGE = "imp_agent_core.agents"
 
 
 class AdkA2aExecutor(AgentExecutor, ABC):
@@ -383,7 +384,7 @@ class ConfiguredA2aExecutor(AdkA2aExecutor):
     def _sub_agent_registry(self, tool_config: dict[str, Any]) -> DynamicAgentRegistry | None:
         if bool(tool_config.get("use_global_registry")):
             registry = get_global_agent_registry()
-            register_agent_package(registry)
+            register_agent_package(registry, package_name=_BUILTIN_AGENT_PACKAGE)
             return registry
         builder_path = str(tool_config.get("registry_builder") or "").strip()
         if not builder_path:

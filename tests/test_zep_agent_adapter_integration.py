@@ -7,6 +7,7 @@ pytest.importorskip("google.adk")
 
 import imp_agent_core.agents.agent_core.inference.prompt as prompt_module
 import imp_agent_core.agents.zep_agent.a2a_agent_core as zep_agent_core
+import imp_agent_core.agents.zep_agent.registry as zep_registry
 from google.adk.models.llm_request import LlmRequest
 from google.genai import types
 from imp_agent_core.agents.agent_core import DynamicAgentRegistry, SubAgentToolConfig
@@ -91,6 +92,50 @@ def test_executor_config_adds_sub_agent_tool() -> None:
         getattr(tool, "__name__", getattr(tool, "name", "")) for tool in agent.tools
     }
     assert agent.instruction.endswith("\nParent can delegate.")
+
+
+def test_worker_executor_config_omits_sub_agent_tool(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        zep_agent_core,
+        "load_agent_instruction",
+        lambda **kwargs: kwargs["fallback_instruction"],
+    )
+
+    executor = ConfiguredA2aExecutor.__new__(ConfiguredA2aExecutor)
+    executor.langfuse_client = None
+    executor._constructor_sub_agent_registry = None
+    executor._constructor_sub_agent_policy = None
+    executor._constructor_sub_agent_resolver = None
+    executor._constructor_sub_agent_instruction = None
+    executor._config = ConfiguredA2aExecutor._load_executor_config(
+        config_path,
+        config_section="worker_executor_config",
+    )
+
+    agent = ConfiguredA2aExecutor._build_agent_from_config(executor)
+
+    assert "invoke_sub_agent" not in {
+        getattr(tool, "__name__", getattr(tool, "name", "")) for tool in agent.tools
+    }
+
+
+def test_zep_worker_registration_uses_worker_executor_config(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def _build_local_a2a_zep_agent(**kwargs):
+        captured.update(kwargs)
+        return object()
+
+    monkeypatch.setattr(zep_registry, "build_local_a2a_zep_agent", _build_local_a2a_zep_agent)
+
+    descriptor = zep_registry.register_zep_worker_agent(DynamicAgentRegistry())
+    assert descriptor.local_builder is not None
+
+    descriptor.local_builder()
+
+    assert captured["config_section"] == "worker_executor_config"
 
 
 def test_load_agent_instruction_uses_default_prompt_path_and_yaml_label(

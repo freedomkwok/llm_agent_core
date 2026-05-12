@@ -6,13 +6,13 @@
       "type": "python",
       "request": "launch",
       "python": "${workspaceFolder}/.venv/bin/python",
-      "program": "${workspaceFolder}/agents/zep_agent/run_local.py",
+      "program": "${workspaceFolder}/imp_agent_core/agents/zep_agent/run_local.py",
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/agents/zep_agent",
+      "cwd": "${workspaceFolder}/imp_agent_core/agents/zep_agent",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       },
-      "envFile": "${workspaceFolder}/agents/zep_agent/.env",
+      "envFile": "${workspaceFolder}/imp_agent_core/agents/zep_agent/.env",
       "justMyCode": false
     },
     {
@@ -34,13 +34,13 @@
       "type": "python",
       "request": "launch",
       "python": "${workspaceFolder}/.venv/bin/python",
-      "program": "${workspaceFolder}/agents/zep_agent/tests/test_zep_agent_connectivity.py",
+      "program": "${workspaceFolder}/imp_agent_core/agents/zep_agent/tests/test_zep_agent_connectivity.py",
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       },
-      "envFile": "${workspaceFolder}/agents/zep_agent/.env",
+      "envFile": "${workspaceFolder}/imp_agent_core/agents/zep_agent/.env",
       "justMyCode": false
     }
   ]

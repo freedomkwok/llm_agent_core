@@ -98,7 +98,7 @@ def register_zep_worker_agent(
         agent_id="zep_agent.worker",
         local_builder=lambda: build_local_a2a_zep_agent(
             mode=OrchestrationMode.AGENT_INTERNAL,
-            config_section="executor_config",
+            config_section="worker_executor_config",
         ),
         replace=replace,
     )

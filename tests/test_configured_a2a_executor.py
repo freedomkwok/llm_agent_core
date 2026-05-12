@@ -235,7 +235,7 @@ def test_build_agent_from_config_can_use_global_sub_agent_registry(
     monkeypatch.setattr(
         configured_executor_module,
         "register_agent_package",
-        lambda registry: auto_registered.append(registry),
+        lambda registry, *, package_name: auto_registered.append((registry, package_name)),
     )
 
     executor = ConfiguredA2aExecutor.__new__(ConfiguredA2aExecutor)
@@ -255,7 +255,7 @@ def test_build_agent_from_config_can_use_global_sub_agent_registry(
     assert isinstance(sub_agent_tool_config, SubAgentToolConfig)
     assert sub_agent_tool_config.registry is registry
     assert sub_agent_tool_config.registry is get_global_agent_registry()
-    assert auto_registered == [registry]
+    assert auto_registered == [(registry, "imp_agent_core.agents")]
 
 
 def test_build_agent_from_config_requires_registry_when_sub_agent_tool_enabled(

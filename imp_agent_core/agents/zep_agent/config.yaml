@@ -50,3 +50,16 @@ executor_config:
     instruction_prompt: create subagent when task should be split into a new agent for search
     instruction_prompt_name: agents/zep_query_agent/instruction_subagent
     instruction_prompt_label: production
+
+# Worker runtime used when this agent is invoked as a sub-agent.
+# Keep this non-delegating so zep_agent.worker cannot recursively call itself.
+worker_executor_config:
+  adk_agent_builder: imp_agent_core.agents.zep_agent.a2a_agent_core.build_zep_llm_agent
+  instruction_prompt_name: agents/zep_query_agent/instruction
+  instruction_prompt_label: production
+  fallback_instruction: >
+    You are a Zep Agent, you are given a user request and you need to use
+    the tools to retrieve information base on use query
+  trace_name: zep_agent_executor
+  artifact_name: zep_agent
+  failed_text_message: Failed to generate a zep agent response with text content.
